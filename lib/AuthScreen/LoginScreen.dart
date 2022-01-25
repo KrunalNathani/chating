@@ -1,13 +1,15 @@
 import 'package:chating/CommonFile/commonFile.dart';
-import 'package:chating/Screens/ChatScreen.dart';
+import 'package:chating/Screens/ChatHomeScreen.dart';
 import 'package:chating/model/usermodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 String email = "";
 String yourPassword = "";
+String newGenerateToken = "";
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key, this.userModel}) : super(key: key);
@@ -149,18 +151,31 @@ class _LoginScreenState extends State<LoginScreen> {
                                     email: emailController.text,
                                     password: passwordController.text);
                             setState(() {});
-                            print(
-                                'userCredential==>${userCredential.user!.uid}');
-                            print(
-                                'userCredential==>${userCredential.user!.email}');
+                            // print(
+                            //     'userCredential==>${userCredential.user!.uid}');
+                            // print(
+                            //     'userCredential==>${userCredential.user!.email}');
 
                             String? userID = userCredential.user!.uid;
 
+                            // CollectionReference users = FirebaseFirestore.instance.collection('userDetail');
+
+                            // FirebaseMessaging.instance.getToken().then((token){
+                            //   fcmToken = token!;
+                            //   print("token $fcmToken");
+                            // });
+                            print("uid is:- ${userID}");
+                           await FirebaseMessaging.instance.getToken().then((value) => newGenerateToken = value!);
+
+                          await  FirebaseFirestore.instance.collection('userDetail').doc(userID)
+                                  .update({'fcmToken': newGenerateToken})
+                                  .then((value) => print("User Updated"))
+                                  .catchError((error) => print("Failed to update user: $error"));
 
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => ChatScreen(UID: userID,)));
+                                    builder: (context) => ChatHomeScreen(UID: userID,)));
                           } on FirebaseAuthException catch (e) {
                             if (e.code == 'user-not-found') {
                               print('No user found for that email.');

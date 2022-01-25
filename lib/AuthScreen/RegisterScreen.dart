@@ -4,6 +4,7 @@ import 'package:chating/model/usermodel.dart';
 import 'package:chating/validation/validation_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,6 +27,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool isAdult = false;
 
   String uID = '';
+  String fcmToken = '';
 
   @override
   Widget build(BuildContext context) {
@@ -164,34 +166,41 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               print(e);
                             }
 
+                            /// Create FCM TOKEN
+
+                         await FirebaseMessaging.instance.getToken().then((token){
+                            fcmToken = token!;
+                              print("token $fcmToken");
+                            });
+
                             /// Register in CloudFire Store user all data
                             final FirebaseFirestore fireStore =
                                 FirebaseFirestore.instance;
 
                             final CollectionReference _mainCollection =
-                                fireStore.collection('chatDetail');
+                                fireStore.collection('userDetail');
 
                             UserDetailsModel model = UserDetailsModel(
                                 fName: fNameController.text,
                                 lName: lNameController.text,
                                 email: emailController.text,
                                 password: passwordController.text,
-                                uid: uID);
+                                uid: uID,
+                            fcmToken: fcmToken
+                            );
 
                             await _mainCollection
-                                .doc()
+                                .doc(uID)
                                 .set(model.toJson())
                                 .catchError((e) => print(e));
 
                             setState(() {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => LoginScreen()));
                             });
-
-
-
-
                           }
-
                         }),
                     const SizedBox(
                       height: 15,
