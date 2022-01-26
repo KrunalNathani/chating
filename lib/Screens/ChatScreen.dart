@@ -1,11 +1,19 @@
-import 'package:chating/CommonFile/commonFile.dart';
+import 'dart:io';
+import 'package:firebase_core/firebase_core.dart'as firebase_core;
+import 'package:path/path.dart' as path;
 import 'package:chating/model/chatScreenModel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:video_player/video_player.dart';
+
+String? massageType;
 
 class ChatScreen extends StatefulWidget {
   ChatScreen({
@@ -36,25 +44,37 @@ class _ChatScreenState extends State<ChatScreen> {
   DateTime? EpochToDateTime;
   int? dateTimeToEpoch;
 
+  UploadTask? upload;
+  FirebaseStorage storage = FirebaseStorage.instance;
+  File? imageFiles;
+  File? videoFiles;
+
+  bool urlComplete = false;
+  bool vidUrlComplete = false;
+  String? imgUrl1;
+  String? vidUrl;
+
+  ScrollController _scrollController = ScrollController();
+
+  File? _video;
+  final picker = ImagePicker();
+
+  // VideoPlayerController? _videoPlayerController;
+
+  VideoPlayerController? _controller;
+
+
   @override
   void initState() {
     // TODO: implement initState
-    print('initstate');
+    if (_scrollController.positions.isNotEmpty) {
+      WidgetsBinding.instance?.addPostFrameCallback((_) => {
+            _scrollController.jumpTo(_scrollController.position.maxScrollExtent)
+          });
+    }
+
+
     super.initState();
-
-    // // var date = new DateTime.fromMicrosecondsSinceEpoch(timestamp);
-    // final DateTime date1 = DateTime.now();
-    //
-    // final timestamp1 = date1.millisecondsSinceEpoch;
-    // print('$timestamp1 (milliseconds)');
-    //
-    // var date = new DateTime.fromMillisecondsSinceEpoch(timestamp1);
-    // print('date==>${date.runtimeType}');
-  }
-
-  String formatTimestamp(Timestamp timestamp) {
-    var format = new DateFormat('y-MM-d'); // <- use skeleton here
-    return format.format(timestamp.toDate());
   }
 
   @override
@@ -78,48 +98,78 @@ class _ChatScreenState extends State<ChatScreen> {
               );
             } else if (snapshot.data!.docs.length == 0) {
               return Center(
-                child: Text(
-                  "No recent chats found",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+                child: urlComplete
+                    ? CircularProgressIndicator()
+                    : Text(
+                        "No recent chats found",
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
               );
             } else {
-              return SingleChildScrollView(primary: true,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ListView(
-                      shrinkWrap: true,
-                      primary: false,
-                      children: snapshot.data!.docs.map((document) {
-                        EpochToDateTime = DateTime.fromMillisecondsSinceEpoch(
-                            int.parse(document['dateTime']));
-                        print(DateFormat.jm().format(EpochToDateTime!));
-                        print('snap id ==>>>> ${widget.receiverUID}');
+              return urlComplete
+                  ? Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      controller: _scrollController,
+                      // primary: true,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          ListView(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            children: snapshot.data!.docs.map((document) {
+                              EpochToDateTime =
+                                  DateTime.fromMillisecondsSinceEpoch(
+                                      int.parse(document['dateTime']));
+                              // print(DateFormat.jm().format(EpochToDateTime!));
+                              // print('snap id ==>>>> ${widget.receiverUID}');
 
-                        return ChatBubble(
-                          text: document['massage'],
-                          // isCurrentUser: false,
-                          isCurrentUser:
-                          widget.receiverUID == document['receiverUID'],
-                          dateTime:
-                          '${DateFormat.jm().format(EpochToDateTime!)}',
-                          senderName: widget.receiverUID ==
-                              document['receiverUID']
-                              ? '${widget.senderName}'
-                              : '${widget.receiverName}',
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              );
+                              if (_scrollController.positions.isNotEmpty) {
+                                WidgetsBinding.instance?.addPostFrameCallback(
+                                    (_) => {
+                                          _scrollController.jumpTo(
+                                              _scrollController
+                                                  .position.maxScrollExtent)
+                                        });
+                              }
+
+
+                              return ChatBubbleText(
+                                text: document['massage'],
+                                messageType: document['massageType'],
+                                imageUrl: document['url'] ?? '',
+                                videoWidget:_controller != null && _controller!.value.isInitialized
+                                    ? AspectRatio(
+                                  aspectRatio: _controller!.value.aspectRatio,
+                                  child: VideoPlayer(_controller!),
+                                )
+                                    : SizedBox(height: 50,) ,
+
+                                onPress: (){
+                                  print('object');
+                                  // downloadFileExample(document['url']);
+                                  // downloadFileExample(document['url']);
+                              },
+                                // isCurrentUser: false,
+                                isCurrentUser: widget.receiverUID ==
+                                    document['receiverUID'],
+                                dateTime:
+                                    '${DateFormat.jm().format(EpochToDateTime!)}',
+                                senderName: widget.receiverUID ==
+                                        document['receiverUID']
+                                    ? '${widget.senderName}'
+                                    : '${widget.receiverName}',
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    );
             }
           }),
       bottomNavigationBar: Container(
-          padding: MediaQuery
-              .of(context)
-              .viewInsets,
+          padding: MediaQuery.of(context).viewInsets,
           color: Colors.grey[300],
           child: Row(
             children: [
@@ -154,54 +204,26 @@ class _ChatScreenState extends State<ChatScreen> {
                       elevation: 20,
                       builder: (context) {
                         return Container(
-                          height: MediaQuery
-                              .of(context)
-                              .size
-                              .height * 0.15,
+                          height: MediaQuery.of(context).size.height * 0.15,
                           color: Colors.transparent,
                           child: Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 5.0),
+                                const EdgeInsets.symmetric(horizontal: 5.0),
                             child: ListView(
                               children: [
                                 TextButton(
-                                  onPressed: () {
-                                    types = 'Images';
+                                  onPressed: () async {
+                                    await getFromGallery();
+                                    if (imageFiles != null) {
+                                      Navigator.pop(context);
+                                      chatMassage.text = imageFiles.toString();
+                                    }
+                                    if (videoFiles != null) {
+                                      Navigator.pop(context);
+                                      chatMassage.text = videoFiles.toString();
+                                    }
 
-                                    showDialog(context: context,builder: (BuildContext context)
-                                    {
-                                      return AlertDialog(
-                                        title: Text("Choose option",
-                                          style: TextStyle(
-                                              color: Colors.blue),),
-                                        content: SingleChildScrollView(
-                                          child: ListBody(
-                                            children: [
-                                              Divider(
-                                                height: 1, color: Colors.blue,),
-                                              ListTile(
-                                                onTap: () {
-                                                  _openGallery(context);
-                                                },
-                                                title: Text("Gallery"),
-                                                leading: Icon(Icons.account_box,
-                                                  color: Colors.blue,),
-                                              ),
-
-                                              Divider(
-                                                height: 1, color: Colors.blue,),
-                                              ListTile(
-                                                onTap: () {
-                                                  _openCamera(context);
-                                                },
-                                                title: Text("Camera"),
-                                                leading: Icon(Icons.camera,
-                                                  color: Colors.blue,),
-                                              ),
-                                            ],
-                                          ),
-                                        ),);
-                                    });
+                                    print("imageFile==> $videoFiles");
                                   },
                                   child: Text(
                                     "Images",
@@ -210,12 +232,24 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                   style: ButtonStyle(
                                       backgroundColor:
-                                      MaterialStateProperty.all(
-                                          Colors.blue)),
+                                          MaterialStateProperty.all(
+                                              Colors.blue)),
                                 ),
                                 TextButton(
-                                  onPressed: () {
+                                  onPressed: () async{
+
+                                    await getVideoFromGallery();
+
+                                    if (videoFiles != null) {
+                                      Navigator.pop(context);
+                                      chatMassage.text = videoFiles.toString();
+                                    }
+
+                                    print("videoFile==> $videoFiles");
                                     types = 'Videos';
+
+                                      // _pickVideo();
+
                                   },
                                   child: Text(
                                     "Videos",
@@ -224,8 +258,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                   style: ButtonStyle(
                                       backgroundColor:
-                                      MaterialStateProperty.all(
-                                          Colors.blue)),
+                                          MaterialStateProperty.all(
+                                              Colors.blue)),
                                 ),
                               ],
                             ),
@@ -259,19 +293,48 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: TextButton.icon(
                   onPressed: () async {
                     if (chatMassage.text.isNotEmpty) {
+                      types = "text";
+
+                      /// Image upload and download url
+
+                      if (imageFiles != null) {
+                        setState(() {
+                          urlComplete = true;
+                        });
+
+                        await uploadFile();
+                        print("imageFile==> $imageFiles");
+                        await downloadURLExample();
+                        types = "Image";
+                      }
+
+                      /// Video upload and download url
+
+                      if (videoFiles != null) {
+                        setState(() {
+                          vidUrlComplete = true;
+                        });
+
+                        await uploadVideoFile();
+                        print("vidFile==> $videoFiles");
+                        await downloadVideoURLExample();
+                        types = "Video";
+                      }
+
+                      /// create chat and chats entry in fire store
                       final FirebaseFirestore fireStore =
                           FirebaseFirestore.instance;
-                      print('chatMAssages ;- ${chatMassage.text}');
+                      // print('chatMAssages ;- ${chatMassage.text}');
 
                       /// create two uer combine IDs and add pass model
                       final CollectionReference _mainCollection =
-                      fireStore.collection('chat');
+                          fireStore.collection('chat');
 
                       /// DateTime to convert ephoch time
                       final DateTime date = DateTime.now();
 
                       dateTimeToEpoch = date.millisecondsSinceEpoch;
-                      print('$dateTimeToEpoch (milliseconds)');
+                      // print('$dateTimeToEpoch (milliseconds)');
 
                       ChatDetailsModel model = ChatDetailsModel(
                           senderName: widget.senderName,
@@ -281,10 +344,15 @@ class _ChatScreenState extends State<ChatScreen> {
                           senderUid: widget.senderUID,
                           receiverUid: widget.receiverUID,
                           dateTime: dateTimeToEpoch.toString(),
-                          massageType: types.isEmpty ? 'text' : types);
+                          massageType: types,
+                          url: imgUrl1,
+                      vidurl:vidUrl
+                      );
 
                       /// this types is selected and after value is null so this types = '';
                       types = '';
+                      imgUrl1 = '';
+                      vidUrl = '';
 
                       /// Chat Massage TextField Clear
                       chatMassage.clear();
@@ -306,48 +374,301 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  PickedFile? imageFile = null;
+  getFromGallery() async {
 
-  void _openCamera(BuildContext context) async {
-    final pickedFile = await ImagePicker().getImage(
-      source: ImageSource.camera,
-    );
-    setState(() {
-      imageFile = pickedFile!;
-    });
-    Navigator.pop(context);
+    XFile? pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery,maxHeight: 1800,maxWidth: 1800);
+    // XFile? pickedFiles = await ImagePicker().pickVideo(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        imageFiles = File(pickedFile.path);
+        print('gallery imageFiles ==> ${imageFiles}');
+      });
+    }
   }
 
-  void _openGallery(BuildContext context) async {
-    final pickedFile = await ImagePicker().getImage(
-      source: ImageSource.gallery,
-    );
+  Future<void> uploadFile() async {
+    final String fileName = path.basename(imageFiles!.path);
+
+    upload = storage.ref(fileName).putFile(imageFiles!);
+    print('upload $upload');
+  }
+
+  /// get image url in cloud storage and send this url in model
+  Future<void> downloadURLExample() async {
+    var storageimage = FirebaseStorage.instance.ref().child(imageFiles!.path);
+    UploadTask task1 = storageimage.putFile(imageFiles!);
+
+// to get the url of the image from firebase storage
+    imgUrl1 = await (await task1).ref.getDownloadURL();
+    print("imgUrl1 ${imgUrl1}");
+
+    // Within your widgets:
+    // Image.network(downloadURL);
+    imageFiles = null;
     setState(() {
-      imageFile = pickedFile!;
+      urlComplete = false;
+    });
+  }
+
+
+
+  getVideoFromGallery() async {
+
+
+    XFile? pickedFiles = await ImagePicker().pickVideo(source: ImageSource.gallery);
+
+    if (pickedFiles != null) {
+      setState(() {
+        videoFiles = File(pickedFiles.path);
+        print('gallery videoFiles ==> ${videoFiles}');
+      });
+    }
+  }
+
+  Future<void> uploadVideoFile() async {
+    final String fileName = path.basename(videoFiles!.path);
+
+    upload = storage.ref(fileName).putFile(videoFiles!);
+    print('upload $upload');
+  }
+
+  /// get image url in cloud storage and send this url in model
+  Future<void> downloadVideoURLExample() async {
+    var storageimage = FirebaseStorage.instance.ref().child(videoFiles!.path);
+    UploadTask task1 = storageimage.putFile(videoFiles!);
+
+// to get the url of the image from firebase storage
+    vidUrl = await (await task1).ref.getDownloadURL();
+    print("imgUrl1 ${vidUrl}");
+
+    // Within your widgets:
+    // Image.network(downloadURL);
+    videoFiles = null;
+    setState(() {
+      vidUrlComplete = false;
     });
 
-    Navigator.pop(context);
+    _controller = VideoPlayerController.network(
+        vidUrl!)
+      ..initialize().then((_) {
+        // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
+        setState(() {});
+      });
   }
 
 }
 
-class ChatBubble extends StatelessWidget {
-  const ChatBubble(
-      {Key? key,
-      required this.text,
-      required this.isCurrentUser,
-      required this.dateTime,
-      required this.senderName
-      })
-      : super(key: key);
+// Future<bool> _requestPermission(Permission permission) async {
+//   if (await permission.isGranted) {
+//     return true;
+//   } else {
+//     var result = await permission.request();
+//     if (result == PermissionStatus.granted) {
+//       return true;
+//     }
+//   }
+//   return false;
+// }
+
+// Future<void> downloadFileExample(String ref) async {
+//
+//   Directory directory;
+//
+//   if (Platform.isAndroid) {
+//     if (await _requestPermission(Permission.storage)) {
+//       directory = (await getExternalStorageDirectory())!;
+//
+//       String newPath = "";
+//
+//       print(directory);
+//       List<String> paths = directory.path.split("/");
+//       for (int x = 1; x < paths.length; x++) {
+//         String folder = paths[x];
+//         if (folder != "Android") {
+//           newPath += "/" + folder;
+//         } else {
+//           break;
+//         }
+//       }
+//       newPath = newPath + "/FireDemo";
+//       directory = Directory(newPath);
+//
+//     } else {
+//       return ;
+//     }
+//   } else {
+//     if (await _requestPermission(Permission.photos)) {
+//       directory = await getTemporaryDirectory();
+//     } else {
+//       return ;
+//     }
+//   }
+//   if (!await directory.exists()) {
+//     await directory.create(recursive: true);
+//   }
+//
+//
+//   File downloadToFile = File('${directory.path}/$ref');
+//
+//   print(downloadToFile);
+//
+//   try {
+//     await FirebaseStorage.instance
+//         .ref(ref)
+//         .writeToFile(downloadToFile);
+//   } on firebase_core.FirebaseException catch (e) {
+//     // e.g, e.code == 'canceled'
+//   }
+// }
+
+
+
+class ChatBubbleText extends StatelessWidget {
+  const ChatBubbleText({
+    Key? key,
+    required this.text,
+    required this.isCurrentUser,
+    required this.dateTime,
+    required this.senderName,
+    required this.messageType,
+    required this.imageUrl,
+    required this.videoWidget,
+    required this.onPress,
+  }) : super(key: key);
   final String text;
   final bool isCurrentUser;
   final String dateTime;
   final String senderName;
+  final String messageType;
+  final String imageUrl;
+  final Widget videoWidget;
+  final Function onPress;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return messageType == "text"
+        ? Padding(
+            /// asymmetric padding
+            padding: EdgeInsets.fromLTRB(
+              isCurrentUser ? 64.0 : 16.0,
+              4,
+              isCurrentUser ? 16.0 : 64.0,
+              4,
+            ),
+            child: Align(
+              /// align the child within the container
+              alignment:
+                  isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DecoratedBox(
+                    /// chat bubble decoration
+                    decoration: BoxDecoration(
+                      color: isCurrentUser ? Colors.blue : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        text,
+                        style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                            color:
+                                isCurrentUser ? Colors.white : Colors.black87),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0, vertical: 1),
+                    child: Text(
+                      dateTime,
+                      style: TextStyle(color: Colors.black26, fontSize: 13),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      senderName,
+                      style: TextStyle(color: Colors.black26, fontSize: 13),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          )
+        : messageType == "Image"? Padding(
+            /// asymmetric padding
+            padding: EdgeInsets.fromLTRB(
+              isCurrentUser ? 64.0 : 16.0,
+              4,
+              isCurrentUser ? 16.0 : 64.0,
+              4,
+            ),
+            child: Align(
+              /// align the child within the container
+              alignment:
+                  isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DecoratedBox(
+                    /// chat bubble decoration
+                    decoration: BoxDecoration(
+                      color: isCurrentUser ? Colors.blue : Colors.grey[500],
+                      // borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Stack(
+                        children: [
+                          Image.network(imageUrl),
+                          // Positioned(
+                          //   bottom: 0,
+                          //   right: 0,
+                          //   child: Container(
+                          //     decoration: BoxDecoration(
+                          //       shape: BoxShape.circle,
+                          //       color: Colors.white,
+                          //     ),
+                          //     height: 35,
+                          //     alignment: Alignment.center,
+                          //     child: IconButton(
+                          //         onPressed: () {
+                          //           onPress;
+                          //         },
+                          //         icon: Icon(
+                          //           Icons.download,
+                          //           color: Colors.green,
+                          //         )),
+                          //   ),
+                          // )
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0, vertical: 1),
+                    child: Text(
+                      dateTime,
+                      style: TextStyle(color: Colors.black26, fontSize: 13),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      senderName,
+                      style: TextStyle(color: Colors.black26, fontSize: 13),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ) :Padding(
       /// asymmetric padding
       padding: EdgeInsets.fromLTRB(
         isCurrentUser ? 64.0 : 16.0,
@@ -357,7 +678,8 @@ class ChatBubble extends StatelessWidget {
       ),
       child: Align(
         /// align the child within the container
-        alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+        alignment:
+        isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,20 +687,18 @@ class ChatBubble extends StatelessWidget {
             DecoratedBox(
               /// chat bubble decoration
               decoration: BoxDecoration(
-                color: isCurrentUser ? Colors.blue : Colors.grey[300],
-                borderRadius: BorderRadius.circular(16),
+                color: isCurrentUser ? Colors.blue : Colors.grey[500],
+                // borderRadius: BorderRadius.circular(16),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  text,
-                  style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                      color: isCurrentUser ? Colors.white : Colors.black87),
-                ),
+                padding: const EdgeInsets.all(4),
+                child: videoWidget,
+                // child: VideoPlayer(VideoPlayerController.network(videoWidget)..initialize().then((_) => setState())),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 1),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0, vertical: 1),
               child: Text(
                 dateTime,
                 style: TextStyle(color: Colors.black26, fontSize: 13),
@@ -394,6 +714,6 @@ class ChatBubble extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ) ;
   }
 }

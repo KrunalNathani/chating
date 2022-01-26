@@ -151,10 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     email: emailController.text,
                                     password: passwordController.text);
                             setState(() {});
-                            // print(
-                            //     'userCredential==>${userCredential.user!.uid}');
-                            // print(
-                            //     'userCredential==>${userCredential.user!.email}');
+
 
                             String? userID = userCredential.user!.uid;
 
