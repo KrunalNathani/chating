@@ -20,6 +20,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   String? receiverToken;
   String? senderUID;
   String? receiverUID;
+  String? receiverFCMToken;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +94,17 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                           print('receiverName ${receiverName}');
                         });
 
+                        /// Find Receiver FCMToken
+                        await FirebaseFirestore.instance
+                            .collection('userDetail')
+                            .doc(document.id)
+                            .get()
+                            .then((value) {
+                          print(value['fcmToken']);
+                          receiverFCMToken = '${value['fcmToken']}';
+                          print('receiverFCMToken ${receiverFCMToken}');
+                        });
+
                         /// Receiver Token Id
                         await FirebaseFirestore.instance
                             .collection('userDetail')
@@ -125,7 +137,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                             receiverToken: receiverToken,
                             combineID: chatRoomID,
                             senderUID: senderUID,
-                            receiverUID: receiverUID,
+                            receiverUID: receiverUID,receiverFCMToken: receiverFCMToken,
                           ),
                         ));
                       },

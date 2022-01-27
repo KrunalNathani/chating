@@ -163,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             // });
                             print("uid is:- ${userID}");
                            await FirebaseMessaging.instance.getToken().then((value) => newGenerateToken = value!);
-
+                            print("newGenerateToken:- ${newGenerateToken}");
                           await  FirebaseFirestore.instance.collection('userDetail').doc(userID)
                                   .update({'fcmToken': newGenerateToken})
                                   .then((value) => print("User Updated"))

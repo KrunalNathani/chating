@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:chating/Notification/notification_api.dart';
 import 'package:firebase_core/firebase_core.dart'as firebase_core;
 import 'package:path/path.dart' as path;
 import 'package:chating/model/chatScreenModel.dart';
@@ -24,6 +25,7 @@ class ChatScreen extends StatefulWidget {
     required this.combineID,
     required this.senderUID,
     required this.receiverUID,
+    required this.receiverFCMToken,
   });
 
   String? senderName;
@@ -32,6 +34,7 @@ class ChatScreen extends StatefulWidget {
   String? combineID;
   String? senderUID;
   String? receiverUID;
+  String? receiverFCMToken;
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -71,8 +74,25 @@ class _ChatScreenState extends State<ChatScreen> {
       WidgetsBinding.instance?.addPostFrameCallback((_) => {
             _scrollController.jumpTo(_scrollController.position.maxScrollExtent)
           });
+
+
+
     }
 
+
+    // Stream<QuerySnapshot<Map<String, dynamic>>> snapshot = FirebaseFirestore.instance
+    //     .collection("chat")
+    //     .doc(widget.combineID)
+    //     .collection("Chats")
+    //     .orderBy('dateTime', descending: false)
+    //     .snapshots();
+    //
+    // snapshot.map((event) => print('event ${}'));
+
+    print('ashok krunal1');
+    print('ashok krunal2');
+    print('ashok krunal3');
+    print('ashok krunal4');
 
     super.initState();
   }
@@ -133,24 +153,36 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   .position.maxScrollExtent)
                                         });
                               }
-
+                              // _controller = VideoPlayerController.network(
+                              //     document['vidurl'])
+                              //   ..initialize();
+                              // print('uuurl:- ${document['vidurl']}');
 
                               return ChatBubbleText(
                                 text: document['massage'],
                                 messageType: document['massageType'],
                                 imageUrl: document['url'] ?? '',
-                                videoWidget:_controller != null && _controller!.value.isInitialized
-                                    ? AspectRatio(
-                                  aspectRatio: _controller!.value.aspectRatio,
-                                  child: VideoPlayer(_controller!),
-                                )
-                                    : SizedBox(height: 50,) ,
-
-                                onPress: (){
-                                  print('object');
-                                  // downloadFileExample(document['url']);
-                                  // downloadFileExample(document['url']);
-                              },
+                              //   videoWidget:_controller != null && _controller!.value.isInitialized
+                              //       ? AspectRatio(
+                              //     aspectRatio: _controller!.value.aspectRatio,
+                              //     child: InkWell(
+                              //       onTap: () {
+                              //         setState(() {
+                              //           _controller!.value.isPlaying
+                              //               ? _controller!.pause()
+                              //               : _controller!.play();
+                              //         });
+                              //       },
+                              //       child: VideoPlayer(_controller!),
+                              //     ),
+                              //   )
+                              //       : SizedBox(height: 50,) ,
+                              //
+                              //   onPress: (){
+                              //     print('object');
+                              //     // downloadFileExample(document['url']);
+                              //     // downloadFileExample(document['url']);
+                              // },
                                 // isCurrentUser: false,
                                 isCurrentUser: widget.receiverUID ==
                                     document['receiverUID'],
@@ -235,32 +267,32 @@ class _ChatScreenState extends State<ChatScreen> {
                                           MaterialStateProperty.all(
                                               Colors.blue)),
                                 ),
-                                TextButton(
-                                  onPressed: () async{
-
-                                    await getVideoFromGallery();
-
-                                    if (videoFiles != null) {
-                                      Navigator.pop(context);
-                                      chatMassage.text = videoFiles.toString();
-                                    }
-
-                                    print("videoFile==> $videoFiles");
-                                    types = 'Videos';
-
-                                      // _pickVideo();
-
-                                  },
-                                  child: Text(
-                                    "Videos",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 17),
-                                  ),
-                                  style: ButtonStyle(
-                                      backgroundColor:
-                                          MaterialStateProperty.all(
-                                              Colors.blue)),
-                                ),
+                                // TextButton(
+                                //   onPressed: () async{
+                                //
+                                //     await getVideoFromGallery();
+                                //
+                                //     if (videoFiles != null) {
+                                //       Navigator.pop(context);
+                                //       chatMassage.text = videoFiles.toString();
+                                //     }
+                                //
+                                //     print("videoFile==> $videoFiles");
+                                //     types = 'Videos';
+                                //
+                                //       // _pickVideo();
+                                //
+                                //   },
+                                //   child: Text(
+                                //     "Videos",
+                                //     style: TextStyle(
+                                //         color: Colors.white, fontSize: 17),
+                                //   ),
+                                //   style: ButtonStyle(
+                                //       backgroundColor:
+                                //           MaterialStateProperty.all(
+                                //               Colors.blue)),
+                                // ),
                               ],
                             ),
                           ),
@@ -302,9 +334,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           urlComplete = true;
                         });
 
-                        await uploadFile();
+                        await upload_DownloadURL_File();
                         print("imageFile==> $imageFiles");
-                        await downloadURLExample();
+                        // await downloadURLExample();
                         types = "Image";
                       }
 
@@ -315,7 +347,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           vidUrlComplete = true;
                         });
 
-                        await uploadVideoFile();
+                        // await uploadVideoFile();
                         print("vidFile==> $videoFiles");
                         await downloadVideoURLExample();
                         types = "Video";
@@ -363,6 +395,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           .collection('Chats')
                           .add(model.toJson())
                           .catchError((e) => print(e));
+
+                      /// send notification receiver
+                      sendNotification(chatMassage.text,  widget.senderName.toString(), widget.receiverFCMToken.toString());
                     }
                   },
                   icon: Icon(Icons.send),
@@ -387,29 +422,32 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> uploadFile() async {
-    final String fileName = path.basename(imageFiles!.path);
+  Future<void> upload_DownloadURL_File() async {
 
-    upload = storage.ref(fileName).putFile(imageFiles!);
-    print('upload $upload');
-  }
-
-  /// get image url in cloud storage and send this url in model
-  Future<void> downloadURLExample() async {
-    var storageimage = FirebaseStorage.instance.ref().child(imageFiles!.path);
-    UploadTask task1 = storageimage.putFile(imageFiles!);
-
-// to get the url of the image from firebase storage
+    var storageImage = FirebaseStorage.instance.ref(imageFiles!.path);
+    UploadTask task1 = storageImage.putFile(imageFiles!);
     imgUrl1 = await (await task1).ref.getDownloadURL();
-    print("imgUrl1 ${imgUrl1}");
 
-    // Within your widgets:
-    // Image.network(downloadURL);
+    print('upload $imgUrl1');
     imageFiles = null;
     setState(() {
       urlComplete = false;
     });
   }
+
+  /// get image url in cloud storage and send this url in model
+//   Future<void> downloadURLExample() async {
+//     var storageimage = FirebaseStorage.instance.ref().child(imageFiles!.path);
+//
+//
+// // to get the url of the image from firebase storage
+//
+//     print("imgUrl1 ${imgUrl1}");
+//
+//     // Within your widgets:
+//     // Image.network(downloadURL);
+//
+//   }
 
 
 
@@ -425,13 +463,13 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
   }
-
-  Future<void> uploadVideoFile() async {
-    final String fileName = path.basename(videoFiles!.path);
-
-    upload = storage.ref(fileName).putFile(videoFiles!);
-    print('upload $upload');
-  }
+  //
+  // Future<void> uploadVideoFile() async {
+  //   final String fileName = path.basename(videoFiles!.path);
+  //
+  //   upload = storage.ref(fileName).putFile(videoFiles!);
+  //   print('upload $upload');
+  // }
 
   /// get image url in cloud storage and send this url in model
   Future<void> downloadVideoURLExample() async {
@@ -533,8 +571,8 @@ class ChatBubbleText extends StatelessWidget {
     required this.senderName,
     required this.messageType,
     required this.imageUrl,
-    required this.videoWidget,
-    required this.onPress,
+    // required this.videoWidget,
+    // required this.onPress,
   }) : super(key: key);
   final String text;
   final bool isCurrentUser;
@@ -542,8 +580,8 @@ class ChatBubbleText extends StatelessWidget {
   final String senderName;
   final String messageType;
   final String imageUrl;
-  final Widget videoWidget;
-  final Function onPress;
+  // final Widget videoWidget;
+  // final Function onPress;
 
   @override
   Widget build(BuildContext context) {
@@ -599,7 +637,9 @@ class ChatBubbleText extends StatelessWidget {
               ),
             ),
           )
-        : messageType == "Image"? Padding(
+        :
+    // messageType == "Image"?
+    Padding(
             /// asymmetric padding
             padding: EdgeInsets.fromLTRB(
               isCurrentUser ? 64.0 : 16.0,
@@ -668,52 +708,54 @@ class ChatBubbleText extends StatelessWidget {
                 ],
               ),
             ),
-          ) :Padding(
-      /// asymmetric padding
-      padding: EdgeInsets.fromLTRB(
-        isCurrentUser ? 64.0 : 16.0,
-        4,
-        isCurrentUser ? 16.0 : 64.0,
-        4,
-      ),
-      child: Align(
-        /// align the child within the container
-        alignment:
-        isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            DecoratedBox(
-              /// chat bubble decoration
-              decoration: BoxDecoration(
-                color: isCurrentUser ? Colors.blue : Colors.grey[500],
-                // borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: videoWidget,
-                // child: VideoPlayer(VideoPlayerController.network(videoWidget)..initialize().then((_) => setState())),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 8.0, vertical: 1),
-              child: Text(
-                dateTime,
-                style: TextStyle(color: Colors.black26, fontSize: 13),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                senderName,
-                style: TextStyle(color: Colors.black26, fontSize: 13),
-              ),
-            )
-          ],
-        ),
-      ),
-    ) ;
+          ) ;
+        // :
+    // Padding(
+    //   /// asymmetric padding
+    //   padding: EdgeInsets.fromLTRB(
+    //     isCurrentUser ? 64.0 : 16.0,
+    //     4,
+    //     isCurrentUser ? 16.0 : 64.0,
+    //     4,
+    //   ),
+    //   child: Align(
+    //     /// align the child within the container
+    //     alignment:
+    //     isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+    //     child: Column(
+    //       mainAxisAlignment: MainAxisAlignment.start,
+    //       crossAxisAlignment: CrossAxisAlignment.start,
+    //       children: [
+    //         DecoratedBox(
+    //           /// chat bubble decoration
+    //           decoration: BoxDecoration(
+    //             color: isCurrentUser ? Colors.blue : Colors.grey[500],
+    //             // borderRadius: BorderRadius.circular(16),
+    //           ),
+    //           child: Padding(
+    //             padding: const EdgeInsets.all(4),
+    //             child: videoWidget,
+    //             // child: VideoPlayer(VideoPlayerController.network(videoWidget)..initialize().then((_) => setState())),
+    //           ),
+    //         ),
+    //         Padding(
+    //           padding: const EdgeInsets.symmetric(
+    //               horizontal: 8.0, vertical: 1),
+    //           child: Text(
+    //             dateTime,
+    //             style: TextStyle(color: Colors.black26, fontSize: 13),
+    //           ),
+    //         ),
+    //         Padding(
+    //           padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    //           child: Text(
+    //             senderName,
+    //             style: TextStyle(color: Colors.black26, fontSize: 13),
+    //           ),
+    //         )
+    //       ],
+    //     ),
+    //   ),
+    // ) ;
   }
 }
