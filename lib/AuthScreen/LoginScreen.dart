@@ -152,7 +152,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     password: passwordController.text);
                             setState(() {});
 
-
                             String? userID = userCredential.user!.uid;
 
                             // CollectionReference users = FirebaseFirestore.instance.collection('userDetail');
@@ -162,17 +161,29 @@ class _LoginScreenState extends State<LoginScreen> {
                             //   print("token $fcmToken");
                             // });
                             print("uid is:- ${userID}");
-                           await FirebaseMessaging.instance.getToken().then((value) => newGenerateToken = value!);
+                            await FirebaseMessaging.instance
+                                .getToken()
+                                .then((value) => newGenerateToken = value!);
                             print("newGenerateToken:- ${newGenerateToken}");
-                          await  FirebaseFirestore.instance.collection('userDetail').doc(userID)
-                                  .update({'fcmToken': newGenerateToken})
-                                  .then((value) => print("User Updated"))
-                                  .catchError((error) => print("Failed to update user: $error"));
+                            await FirebaseFirestore.instance
+                                .collection('userDetail')
+                                .doc(userID)
+                                .update({'fcmToken': newGenerateToken})
+                                .then((value) => print("User Updated"))
+                                .catchError((error) =>
+                                    print("Failed to update user: $error"));
 
-                            Navigator.push(
+
+                            Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => ChatHomeScreen(UID: userID,)));
+                                    builder: (context) => ChatHomeScreen(
+                                          UID: userID,
+                                        )
+                                ),
+                                (route) => false);
+
+
                           } on FirebaseAuthException catch (e) {
                             if (e.code == 'user-not-found') {
                               print('No user found for that email.');

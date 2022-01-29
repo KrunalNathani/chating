@@ -21,6 +21,9 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   String? senderUID;
   String? receiverUID;
   String? receiverFCMToken;
+  String? chatRoomID;
+
+  List messageList = [];
 
   @override
   Widget build(BuildContext context) {
@@ -65,84 +68,148 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                   print('snap shot id -> ${snapshot.data!.docs.length}');
                   print('snap shot id -> ${document.id}');
                   return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ListTile(
-                      tileColor: Colors.green,
-                      title: Text("${document['fName']} ${document['lName']}"),
-                      onTap: () async {
-                        print(widget.UID);
+                      padding: const EdgeInsets.all(8.0),
+                      child: Stack(
+                        children: [
+                          ListTile(
+                            tileColor: Colors.green,
+                            title: Text(
+                                "${document['fName']} ${document['lName']}"),
+                            onTap: () async {
+                              print(widget.UID);
 
-                        /// find sender Name
-                        await FirebaseFirestore.instance
-                            .collection('userDetail')
-                            .doc(widget.UID)
-                            .get()
-                            .then((value) {
-                          print(value['fName'] + value['lName']);
-                          senderName = '${value['fName']} ${value['lName']}';
-                          print('senderName ${senderName}');
-                        });
+                              /// find sender Name
+                              await FirebaseFirestore.instance
+                                  .collection('userDetail')
+                                  .doc(widget.UID)
+                                  .get()
+                                  .then((value) {
+                                print(value['fName'] + value['lName']);
+                                senderName =
+                                    '${value['fName']} ${value['lName']}';
+                                print('senderName ${senderName}');
+                              });
 
-                        /// Find Receiver NAme
-                        await FirebaseFirestore.instance
-                            .collection('userDetail')
-                            .doc(document.id)
-                            .get()
-                            .then((value) {
-                          print(value['fName'] + value['lName']);
-                          receiverName = '${value['fName']} ${value['lName']}';
-                          print('receiverName ${receiverName}');
-                        });
+                              /// Find Receiver NAme
+                              await FirebaseFirestore.instance
+                                  .collection('userDetail')
+                                  .doc(document.id)
+                                  .get()
+                                  .then((value) {
+                                print(value['fName'] + value['lName']);
+                                receiverName =
+                                    '${value['fName']} ${value['lName']}';
+                                print('receiverName ${receiverName}');
+                              });
 
-                        /// Find Receiver FCMToken
-                        await FirebaseFirestore.instance
-                            .collection('userDetail')
-                            .doc(document.id)
-                            .get()
-                            .then((value) {
-                          print(value['fcmToken']);
-                          receiverFCMToken = '${value['fcmToken']}';
-                          print('receiverFCMToken ${receiverFCMToken}');
-                        });
+                              /// Find Receiver FCMToken
+                              await FirebaseFirestore.instance
+                                  .collection('userDetail')
+                                  .doc(document.id)
+                                  .get()
+                                  .then((value) {
+                                print(value['fcmToken']);
+                                receiverFCMToken = '${value['fcmToken']}';
+                                print('receiverFCMToken ${receiverFCMToken}');
+                              });
 
-                        /// Receiver Token Id
-                        await FirebaseFirestore.instance
-                            .collection('userDetail')
-                            .doc(document.id)
-                            .get()
-                            .then((value) {
-                          print(value['fcmToken']);
-                          receiverToken = '${value['fcmToken']}';
-                          print('fcmToken ${receiverToken}');
-                        });
+                              /// Receiver Token Id
+                              await FirebaseFirestore.instance
+                                  .collection('userDetail')
+                                  .doc(document.id)
+                                  .get()
+                                  .then((value) {
+                                print(value['fcmToken']);
+                                receiverToken = '${value['fcmToken']}';
+                                print('fcmToken ${receiverToken}');
+                              });
 
-                        /// Sender UID
-                        senderUID = widget.UID;
-                        print('senderUID ${senderUID}');
+                              /// Sender UID
+                              senderUID = widget.UID;
+                              print('senderUID ${senderUID}');
 
-                        /// Receiver UID
-                        receiverUID = document.id;
-                        print('receiverUID ${receiverUID}');
+                              /// Receiver UID
+                              receiverUID = document.id;
+                              print('receiverUID ${receiverUID}');
 
-                        String chatRoomID =
-                            senderUID.hashCode <= receiverUID.hashCode
-                                ? '${senderUID} ${receiverUID}'
-                                : '${receiverUID} ${senderUID}';
-                        print('chatRoomID ==> ${chatRoomID}');
+                              chatRoomID =
+                                  senderUID.hashCode <= receiverUID.hashCode
+                                      ? '${senderUID} ${receiverUID}'
+                                      : '${receiverUID} ${senderUID}';
+                              print('chatRoomID ==> ${chatRoomID}');
 
-                        Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => ChatScreen(
-                            senderName: senderName,
-                            receiverName: receiverName,
-                            receiverToken: receiverToken,
-                            combineID: chatRoomID,
-                            senderUID: senderUID,
-                            receiverUID: receiverUID,receiverFCMToken: receiverFCMToken,
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => ChatScreen(
+                                  senderName: senderName,
+                                  receiverName: receiverName,
+                                  receiverToken: receiverToken,
+                                  combineID: chatRoomID,
+                                  senderUID: senderUID,
+                                  receiverUID: receiverUID,
+                                  receiverFCMToken: receiverFCMToken,
+                                ),
+                              ));
+                            },
                           ),
-                        ));
-                      },
-                    ),
-                  );
+
+                          StreamBuilder(
+                              /// chat room create and create chat massage user and receiver
+                              stream: FirebaseFirestore.instance
+                                  .collection("chat")
+                                  .doc(chatRoomID)
+                                  .collection("Chats").where('receiverUID', isEqualTo: receiverUID)
+                                  .where('readMessage', isEqualTo: false)
+                                  .snapshots(),
+                              builder: (BuildContext context,
+                                  AsyncSnapshot<QuerySnapshot> snapshot) {
+                                if (snapshot.hasData) {
+                                 var result = snapshot.data!.docs.map((e) => e['readMessage']);
+                                  print(result);
+                                  if(result.isNotEmpty){
+                                    messageList.add(result);
+                                    // print(messageList);
+                                    // print(messageList.length);
+                                  } else{
+                                    messageList.clear();
+                                  }
+                                }
+
+                                return Positioned(
+                                  right: 0,
+                                  bottom: 0,
+                                  child: Container(alignment: Alignment.center,
+                                    height: 20,
+                                    width: 20,
+                                    decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle),
+                                    child: Text(messageList.length.toString()),
+                                  ),
+                                );
+                              }),
+
+                          // StreamBuilder<Object>(
+                          //     stream: FirebaseFirestore.instance
+                          //         .collection("chat")
+                          //         .doc(chatRoomID)
+                          //         .collection("Chats").where('readMessage', isEqualTo: false)
+                          //         .snapshots(),
+                          //     builder: (context, snapshot) {
+                          //       return Positioned(
+                          //         right: 0,
+                          //         bottom: 0,
+                          //         child: Container(
+                          //           height: 20,
+                          //           width: 20,
+                          //           decoration: BoxDecoration(
+                          //               color: Colors.red, shape: BoxShape.circle),
+                          //           child: Text('data'),
+                          //         ),
+                          //       );
+                          //     }
+                          //   )
+                        ],
+                      ));
                 }).toList(),
               );
             }),

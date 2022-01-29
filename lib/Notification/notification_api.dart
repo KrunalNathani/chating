@@ -27,7 +27,7 @@ Future sendNotification(String body, String title, String token) async {
         "image":
             "https://images.idgesg.net/images/article/2017/08/lock_circuit_board_bullet_hole_computer_security_breach_thinkstock_473158924_3x2-100732430-large.jpg"
       },
-      "registration_ids": ["eqXfnDHjQ1KZdZF1ficQDU:APA91bFsmNhr0QbI6QemF3mogckeBujTvXT7uZXSLwexWWf9TRBOFy1pqpiVlAf3T7Csk6-ZbpZ7-NTj4OL3bFhfEKfUAzaxxIGYI0q_WzT0fyoa7ZVuM0iNNFKzDmjLS2Stj0zEZDtz"]
+      "registration_ids": ["e1dvr0JUQUiQOgEjTrSDpu:APA91bHUfD010sqPQUE9XC_QLs70PNyr3DdKseaJkVVLOeQ7uILSwwIdvhRuS_AvdTYCyn8i754LDFD2O_Zh3vwKguJTN9engAbSQwB9hxd34qTcKkMzdEnfEmJ6KpUriQBSuwWue_1w"]
     }),
   );
   print('Status code : ${response.statusCode}');

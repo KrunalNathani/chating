@@ -1,13 +1,18 @@
+
 import 'dart:io';
+import 'package:chating/CommonFile/Permission%20Requast.dart';
+import 'package:chating/CommonFile/chat_massage_design.dart';
 import 'package:chating/Notification/notification_api.dart';
-import 'package:firebase_core/firebase_core.dart'as firebase_core;
-import 'package:path/path.dart' as path;
 import 'package:chating/model/chatScreenModel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -17,6 +22,7 @@ import 'package:video_player/video_player.dart';
 String? massageType;
 
 class ChatScreen extends StatefulWidget {
+  /// next Screen data pass
   ChatScreen({
     Key? key,
     required this.senderName,
@@ -28,6 +34,7 @@ class ChatScreen extends StatefulWidget {
     required this.receiverFCMToken,
   });
 
+  /// next Screen data pass parameter
   String? senderName;
   String? receiverName;
   String? receiverToken;
@@ -43,67 +50,84 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   TextEditingController chatMassage = TextEditingController();
 
+  /// massage type
   String types = '';
+
+  /// massage time convert DateTime to epoch and epoch to DateTime
   DateTime? EpochToDateTime;
   int? dateTimeToEpoch;
 
+  /// Image and video file upload and download
   UploadTask? upload;
   FirebaseStorage storage = FirebaseStorage.instance;
   File? imageFiles;
   File? videoFiles;
-
   bool urlComplete = false;
   bool vidUrlComplete = false;
   String? imgUrl1;
   String? vidUrl;
 
+  /// massage autoscroll controller
   ScrollController _scrollController = ScrollController();
 
-  File? _video;
+  /// image picker create object
   final picker = ImagePicker();
 
-  // VideoPlayerController? _videoPlayerController;
-
+  /// show video controller
   VideoPlayerController? _controller;
 
+  /// message raed or not bool
+  bool isMassageRead = false;
+
+  ///Image tap popup menu and open popup menu as itis down position
+  Offset? _tapPosition;
+
+  /// download images
+  Dio dio = Dio();
+  bool loading = false;
+  double progress = 1;
+
+  /// store message id in model
+  String? messageID;
 
   @override
   void initState() {
     // TODO: implement initState
+
+    /// Scroll automatically code
     if (_scrollController.positions.isNotEmpty) {
       WidgetsBinding.instance?.addPostFrameCallback((_) => {
             _scrollController.jumpTo(_scrollController.position.maxScrollExtent)
           });
-
-
-
     }
+    print("currentUserID ==> ${widget.senderUID}");
+    // if(widget.receiverUID == ){}
 
-
-    // Stream<QuerySnapshot<Map<String, dynamic>>> snapshot = FirebaseFirestore.instance
-    //     .collection("chat")
-    //     .doc(widget.combineID)
-    //     .collection("Chats")
-    //     .orderBy('dateTime', descending: false)
-    //     .snapshots();
-    //
-    // snapshot.map((event) => print('event ${}'));
-
-    print('ashok krunal1');
-    print('ashok krunal2');
-    print('ashok krunal3');
-    print('ashok krunal4');
-
+    isMassageRead = true;
     super.initState();
+    print('initState $isMassageRead');
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    isMassageRead = false;
+    super.dispose();
+    print('dispose $isMassageRead');
   }
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("Loading ==> $loading");
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.receiverName!),
+        actions: [IconButton(onPressed: () {}, icon: Icon(Icons.ac_unit))],
       ),
       body: StreamBuilder(
+
+          /// chat room create and create chat massage user and receiver
           stream: FirebaseFirestore.instance
               .collection("chat")
               .doc(widget.combineID)
@@ -129,77 +153,155 @@ class _ChatScreenState extends State<ChatScreen> {
             } else {
               return urlComplete
                   ? Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      controller: _scrollController,
-                      // primary: true,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ListView(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            children: snapshot.data!.docs.map((document) {
-                              EpochToDateTime =
-                                  DateTime.fromMillisecondsSinceEpoch(
-                                      int.parse(document['dateTime']));
-                              // print(DateFormat.jm().format(EpochToDateTime!));
-                              // print('snap id ==>>>> ${widget.receiverUID}');
+                  : loading
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Center(
+                                child: CircularProgressIndicator(
+                              color: Colors.green,
+                              value: progress,
+                              strokeWidth: 5,
+                              backgroundColor: Colors.red,
+                            )),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              "Downloading, please wait ...",
+                              style:
+                                  TextStyle(color: Colors.black, fontSize: 15),
+                            )
+                          ],
+                        )
+                      : SingleChildScrollView(
+                          controller: _scrollController,
+                          // primary: true,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              ListView(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                children: snapshot.data!.docs.map((document) {
+                                  print('docID = ${document.id}');
 
-                              if (_scrollController.positions.isNotEmpty) {
-                                WidgetsBinding.instance?.addPostFrameCallback(
-                                    (_) => {
-                                          _scrollController.jumpTo(
-                                              _scrollController
-                                                  .position.maxScrollExtent)
-                                        });
-                              }
-                              // _controller = VideoPlayerController.network(
-                              //     document['vidurl'])
-                              //   ..initialize();
-                              // print('uuurl:- ${document['vidurl']}');
+                                  EpochToDateTime =
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                          int.parse(document['dateTime']));
+                                  // print(DateFormat.jm().format(EpochToDateTime!));
+                                  // print('snap id ==>>>> ${widget.receiverUID}');
 
-                              return ChatBubbleText(
-                                text: document['massage'],
-                                messageType: document['massageType'],
-                                imageUrl: document['url'] ?? '',
-                              //   videoWidget:_controller != null && _controller!.value.isInitialized
-                              //       ? AspectRatio(
-                              //     aspectRatio: _controller!.value.aspectRatio,
-                              //     child: InkWell(
-                              //       onTap: () {
-                              //         setState(() {
-                              //           _controller!.value.isPlaying
-                              //               ? _controller!.pause()
-                              //               : _controller!.play();
-                              //         });
-                              //       },
-                              //       child: VideoPlayer(_controller!),
-                              //     ),
-                              //   )
-                              //       : SizedBox(height: 50,) ,
-                              //
-                              //   onPress: (){
-                              //     print('object');
-                              //     // downloadFileExample(document['url']);
-                              //     // downloadFileExample(document['url']);
-                              // },
-                                // isCurrentUser: false,
-                                isCurrentUser: widget.receiverUID ==
-                                    document['receiverUID'],
-                                dateTime:
-                                    '${DateFormat.jm().format(EpochToDateTime!)}',
-                                senderName: widget.receiverUID ==
-                                        document['receiverUID']
-                                    ? '${widget.senderName}'
-                                    : '${widget.receiverName}',
-                              );
-                            }).toList(),
+                                  print(
+                                      'documentwww ${document['receiverUID']}');
+
+                                  /// autoscroll is not Empty then this scroll is start
+                                  if (_scrollController.positions.isNotEmpty) {
+                                    WidgetsBinding.instance
+                                        ?.addPostFrameCallback((_) => {
+                                              _scrollController.jumpTo(
+                                                  _scrollController
+                                                      .position.maxScrollExtent)
+                                            });
+                                    // print("LiveTime => ${DateFormat.jm().format(DateTime.now())}");
+                                  }
+
+                                  // print("massageTime => ${DateFormat.jm().format(EpochToDateTime!)}");
+
+                                  if (widget.senderUID !=
+                                      document['senderUID']) {
+                                    print("check Condition and data add");
+                                    readMessage(
+                                        document.id, document['receiverUID']);
+                                    // print("isMassageRead not match date");
+                                    // print("isMassageRead not match date = ${isMassageRead}");
+                                  } else {
+                                    print("data not add");
+                                  }
+                                  // else {
+                                  //   //
+                                  //   isMassageRead = false;
+                                  //   // readMessage(document.id);
+                                  //   print("isMassageRead match date");
+                                  //   // print("isMassageRead match date = ${isMassageRead}");
+                                  // }
+
+                                  // _controller = VideoPlayerController.network(
+                                  //     document['vidurl'])
+                                  //   ..initialize();
+                                  // print('uuurl:- ${document['vidurl']}');
+
+                                  /// Showing chatting message
+                                  ///
+
+                                  // var a = FirebaseFirestore.instance
+                                  //      .collection("chat")
+                                  //      .doc(widget.combineID)
+                                  //      .collection("Chats")
+                                  //      .where('url',isEqualTo: document['url'])
+                                  //      .snapshots().forEach((element) {element.docs.forEach((element) {element.data();});});
+                                  //
+
+                                  print('messageID ${messageID}');
+
+                                  return ChatBubbleText(
+                                    text: document['massage'],
+                                    messageType: document['massageType'],
+                                    imageUrl: document['url'] ?? '',
+                                    onPressPopup: () {
+                                      _onPress(document['url']);
+                                    },
+                                    onTapDownPopup: _onTapDown,
+                                    //   videoWidget:_controller != null && _controller!.value.isInitialized
+                                    //       ? AspectRatio(
+                                    //     aspectRatio: _controller!.value.aspectRatio,
+                                    //     child: InkWell(
+                                    //       onTap: () {
+                                    //         setState(() {
+                                    //           _controller!.value.isPlaying
+                                    //               ? _controller!.pause()
+                                    //               : _controller!.play();
+                                    //         });
+                                    //       },
+                                    //       child: VideoPlayer(_controller!),
+                                    //     ),
+                                    //   )
+                                    //       : SizedBox(height: 50,) ,
+                                    //
+                                    //   onPress: (){
+                                    //     print('object');
+                                    //     // downloadFileExample(document['url']);
+                                    //     // downloadFileExample(document['url']);
+                                    // },
+                                    // isCurrentUser: false,
+                                    // loader: loading
+                                    //     ? Center(
+                                    //         child: CircularProgressIndicator(
+                                    //         color: Colors.green,
+                                    //         value: progress,
+                                    //       ))
+                                    //     : Container(
+                                    //         height: 20,
+                                    //         color: Colors.red,
+                                    //       ),
+                                    isCurrentUser: widget.receiverUID ==
+                                        document['receiverUID'],
+                                    dateTime:
+                                        '${DateFormat.jm().format(EpochToDateTime!)}',
+                                    senderName: widget.receiverUID ==
+                                            document['receiverUID']
+                                        ? '${widget.senderName}'
+                                        : '${widget.receiverName}',
+                                  );
+                                }).toList(),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
+                        );
             }
           }),
+
+      /// this is massage typing box, select image and send button
       bottomNavigationBar: Container(
           padding: MediaQuery.of(context).viewInsets,
           color: Colors.grey[300],
@@ -328,7 +430,6 @@ class _ChatScreenState extends State<ChatScreen> {
                       types = "text";
 
                       /// Image upload and download url
-
                       if (imageFiles != null) {
                         setState(() {
                           urlComplete = true;
@@ -341,7 +442,6 @@ class _ChatScreenState extends State<ChatScreen> {
                       }
 
                       /// Video upload and download url
-
                       if (videoFiles != null) {
                         setState(() {
                           vidUrlComplete = true;
@@ -368,6 +468,18 @@ class _ChatScreenState extends State<ChatScreen> {
                       dateTimeToEpoch = date.millisecondsSinceEpoch;
                       // print('$dateTimeToEpoch (milliseconds)');
 
+                      /// first find text message doucument id and store id in messageID and this value given model
+
+
+
+
+                    // FirebaseFirestore.instance
+                    //       .collection("chat")
+                    //       .doc(widget.combineID)
+                    //       .collection("Chats")
+                    //       .doc()
+                    //       .get();
+
                       ChatDetailsModel model = ChatDetailsModel(
                           senderName: widget.senderName,
                           receiverName: widget.receiverName,
@@ -378,16 +490,19 @@ class _ChatScreenState extends State<ChatScreen> {
                           dateTime: dateTimeToEpoch.toString(),
                           massageType: types,
                           url: imgUrl1,
-                      vidurl:vidUrl
-                      );
+                          vidurl: vidUrl,
+                          // ChatsMessageID: ,
+                          readMessage: false);
 
                       /// this types is selected and after value is null so this types = '';
                       types = '';
                       imgUrl1 = '';
                       vidUrl = '';
-
+                      messageID = '';
                       /// Chat Massage TextField Clear
                       chatMassage.clear();
+
+                      print("modelllll => ${model.toJson()}");
 
                       /// create two uer chatting collection in firebase
                       await _mainCollection
@@ -397,7 +512,10 @@ class _ChatScreenState extends State<ChatScreen> {
                           .catchError((e) => print(e));
 
                       /// send notification receiver
-                      sendNotification(chatMassage.text,  widget.senderName.toString(), widget.receiverFCMToken.toString());
+                      sendNotification(
+                          chatMassage.text,
+                          widget.senderName.toString(),
+                          widget.receiverFCMToken.toString());
                     }
                   },
                   icon: Icon(Icons.send),
@@ -409,10 +527,109 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  getFromGallery() async {
+  _onTapDown(TapDownDetails details) {
+    debugPrint("--> Detail --> $details ");
 
-    XFile? pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery,maxHeight: 1800,maxWidth: 1800);
-    // XFile? pickedFiles = await ImagePicker().pickVideo(source: ImageSource.gallery);
+    _tapPosition = details.globalPosition;
+  }
+
+  _onPress(String? url) {
+    final RenderBox overlay =
+        Overlay.of(context)!.context.findRenderObject() as RenderBox;
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+          Rect.fromPoints(_tapPosition!, _tapPosition!),
+          Offset.zero & overlay.size),
+      items: [
+        PopupMenuItem<String>(
+            child: TextButton.icon(
+                onPressed: () {
+                  Clipboard.setData(new ClipboardData(text: url)).then((value) {
+                    //only if ->
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Copy Successfully')));
+                  });
+                  print(
+                      "uuurl ${Clipboard.setData(new ClipboardData(text: url))}");
+                },
+                icon: Icon(Icons.copy),
+                label: Text('Copy')),
+            value: '1'),
+        PopupMenuItem<String>(
+            child: TextButton.icon(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  setState(() {
+                    loading = true;
+                  });
+
+                  await downloadFile(url);
+                  setState(() {
+                    loading = false;
+                  });
+                },
+                icon: Icon(Icons.download),
+                label: Text('Download')),
+            value: '2'),
+        PopupMenuItem<String>(
+            child: TextButton.icon(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      // return object of type Dialog
+                      return AlertDialog(
+                        title: new Text("Alert"),
+                        content: new Text("Are you sure delete message!"),
+                        actions: <Widget>[
+                          // usually buttons at the bottom of the dialog
+                          TextButton(
+                            child: new Text("Close"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: new Text("delete"),
+                            onPressed: () {
+                              // FirebaseFirestore.instance
+                              //     .collection("chat")
+                              //     .doc(widget.combineID)
+                              //     .collection("Chats")
+                              //     .where('', isEqualTo: '')
+                              //     .snapshots();
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                icon: Icon(Icons.delete),
+                label: Text('Delete')),
+            value: '2'),
+      ],
+      elevation: 8.0,
+    ).then<void>((String? itemSelected) {
+      print("items ${itemSelected}");
+      // if (itemSelected == null) return;
+      //
+      // if(itemSelected == "1"){
+      //   //code here
+      // }else if(itemSelected == "2"){
+      //   //code here
+      // }else{
+      //   //code here
+      // }
+    });
+  }
+
+  getFromGallery() async {
+    XFile? pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery, maxHeight: 1800, maxWidth: 1800);
 
     if (pickedFile != null) {
       setState(() {
@@ -423,7 +640,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> upload_DownloadURL_File() async {
-
     var storageImage = FirebaseStorage.instance.ref(imageFiles!.path);
     UploadTask task1 = storageImage.putFile(imageFiles!);
     imgUrl1 = await (await task1).ref.getDownloadURL();
@@ -449,12 +665,34 @@ class _ChatScreenState extends State<ChatScreen> {
 //
 //   }
 
+  readMessage(id, id1) async {
+    FirebaseFirestore.instance
+        .collection("chat")
+        .doc(widget.combineID)
+        .collection("Chats")
+        .where('receiverUID', isEqualTo: id1)
+        .snapshots()
+        .listen((event) async {
+      // var a = await FirebaseFirestore.instance
+      //     .collection("chat")
+      //     .doc(widget.combineID)
+      //     .collection("Chats")
+      //     .get();
+      //
+      // print("dataGet ++> ${a.docs.map((e) => e.data())}");
 
+      final DocumentReference documentReference = FirebaseFirestore.instance
+          .collection("chat")
+          .doc(widget.combineID)
+          .collection("Chats")
+          .doc(id);
+      documentReference.update({'readMessage': true});
+    });
+  }
 
   getVideoFromGallery() async {
-
-
-    XFile? pickedFiles = await ImagePicker().pickVideo(source: ImageSource.gallery);
+    XFile? pickedFiles =
+        await ImagePicker().pickVideo(source: ImageSource.gallery);
 
     if (pickedFiles != null) {
       setState(() {
@@ -463,6 +701,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
   }
+
   //
   // Future<void> uploadVideoFile() async {
   //   final String fileName = path.basename(videoFiles!.path);
@@ -487,14 +726,115 @@ class _ChatScreenState extends State<ChatScreen> {
       vidUrlComplete = false;
     });
 
-    _controller = VideoPlayerController.network(
-        vidUrl!)
+    _controller = VideoPlayerController.network(vidUrl!)
       ..initialize().then((_) {
         // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
         setState(() {});
       });
   }
 
+  /// Download image in your gallery
+  Future<bool> saveImage(String url, String fileName) async {
+    Directory directory;
+    try {
+      if (Platform.isAndroid) {
+        if (await _requestPermission(Permission.storage)) {
+          directory = (await getExternalStorageDirectory())!;
+
+          String newPath = "";
+
+          print(directory);
+          List<String> paths = directory.path.split("/");
+          for (int x = 1; x < paths.length; x++) {
+            String folder = paths[x];
+            if (folder != "Android") {
+              newPath += "/" + folder;
+            } else {
+              break;
+            }
+          }
+          newPath = newPath + "/Chatting App";
+          directory = Directory(newPath);
+        } else {
+          return false;
+        }
+      } else {
+        if (await _requestPermission(Permission.photos)) {
+          directory = await getTemporaryDirectory();
+        } else {
+          return false;
+        }
+      }
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+      if (await directory.exists()) {
+        File saveFile = File(directory.path + "/$fileName");
+        print("saveFile => $saveFile");
+        print("direc => $directory");
+        await dio.download(url, saveFile.path,
+            onReceiveProgress: (value1, value2) {
+          setState(() {
+            progress = value1 / value2;
+          });
+        });
+
+        if (Platform.isIOS) {
+          await ImageGallerySaver.saveFile(saveFile.path,
+              isReturnPathOfIOS: true);
+        }
+        return true;
+      }
+      if (await directory.exists()) {
+        File saveFile = File(directory.path + "/$fileName");
+        print("saveFile => $saveFile");
+        await dio.download(url, saveFile.path,
+            onReceiveProgress: (value1, value2) {
+          setState(() {
+            progress = value1 / value2;
+          });
+        });
+
+        if (Platform.isIOS) {
+          await ImageGallerySaver.saveFile(saveFile.path,
+              isReturnPathOfIOS: true);
+        }
+        return true;
+      }
+    } catch (e) {
+      print(e);
+    }
+    return false;
+  }
+
+  downloadFile(String? imageDownload) async {
+    // saveVideo will download and save file to Device and will return a boolean
+    // for if the file is successfully or not\
+
+    bool downloaded =
+        await saveImage(imageDownload!, "v_${DateTime.now()}.jpg");
+
+    if (downloaded) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Image Save Successfully!")));
+      print("downloaded => $downloaded");
+      print("File Downloaded");
+    } else {
+      print("Problem Downloading File");
+    }
+  }
+
+  Future<bool> _requestPermission(Permission permission) async {
+    if (await permission.isGranted) {
+      return true;
+    } else {
+      var result = await permission.request();
+      if (result == PermissionStatus.granted) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 // Future<bool> _requestPermission(Permission permission) async {
@@ -559,203 +899,3 @@ class _ChatScreenState extends State<ChatScreen> {
 //     // e.g, e.code == 'canceled'
 //   }
 // }
-
-
-
-class ChatBubbleText extends StatelessWidget {
-  const ChatBubbleText({
-    Key? key,
-    required this.text,
-    required this.isCurrentUser,
-    required this.dateTime,
-    required this.senderName,
-    required this.messageType,
-    required this.imageUrl,
-    // required this.videoWidget,
-    // required this.onPress,
-  }) : super(key: key);
-  final String text;
-  final bool isCurrentUser;
-  final String dateTime;
-  final String senderName;
-  final String messageType;
-  final String imageUrl;
-  // final Widget videoWidget;
-  // final Function onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    return messageType == "text"
-        ? Padding(
-            /// asymmetric padding
-            padding: EdgeInsets.fromLTRB(
-              isCurrentUser ? 64.0 : 16.0,
-              4,
-              isCurrentUser ? 16.0 : 64.0,
-              4,
-            ),
-            child: Align(
-              /// align the child within the container
-              alignment:
-                  isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DecoratedBox(
-                    /// chat bubble decoration
-                    decoration: BoxDecoration(
-                      color: isCurrentUser ? Colors.blue : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(
-                        text,
-                        style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                            color:
-                                isCurrentUser ? Colors.white : Colors.black87),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0, vertical: 1),
-                    child: Text(
-                      dateTime,
-                      style: TextStyle(color: Colors.black26, fontSize: 13),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      senderName,
-                      style: TextStyle(color: Colors.black26, fontSize: 13),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          )
-        :
-    // messageType == "Image"?
-    Padding(
-            /// asymmetric padding
-            padding: EdgeInsets.fromLTRB(
-              isCurrentUser ? 64.0 : 16.0,
-              4,
-              isCurrentUser ? 16.0 : 64.0,
-              4,
-            ),
-            child: Align(
-              /// align the child within the container
-              alignment:
-                  isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DecoratedBox(
-                    /// chat bubble decoration
-                    decoration: BoxDecoration(
-                      color: isCurrentUser ? Colors.blue : Colors.grey[500],
-                      // borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Stack(
-                        children: [
-                          Image.network(imageUrl),
-                          // Positioned(
-                          //   bottom: 0,
-                          //   right: 0,
-                          //   child: Container(
-                          //     decoration: BoxDecoration(
-                          //       shape: BoxShape.circle,
-                          //       color: Colors.white,
-                          //     ),
-                          //     height: 35,
-                          //     alignment: Alignment.center,
-                          //     child: IconButton(
-                          //         onPressed: () {
-                          //           onPress;
-                          //         },
-                          //         icon: Icon(
-                          //           Icons.download,
-                          //           color: Colors.green,
-                          //         )),
-                          //   ),
-                          // )
-                        ],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0, vertical: 1),
-                    child: Text(
-                      dateTime,
-                      style: TextStyle(color: Colors.black26, fontSize: 13),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      senderName,
-                      style: TextStyle(color: Colors.black26, fontSize: 13),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ) ;
-        // :
-    // Padding(
-    //   /// asymmetric padding
-    //   padding: EdgeInsets.fromLTRB(
-    //     isCurrentUser ? 64.0 : 16.0,
-    //     4,
-    //     isCurrentUser ? 16.0 : 64.0,
-    //     4,
-    //   ),
-    //   child: Align(
-    //     /// align the child within the container
-    //     alignment:
-    //     isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-    //     child: Column(
-    //       mainAxisAlignment: MainAxisAlignment.start,
-    //       crossAxisAlignment: CrossAxisAlignment.start,
-    //       children: [
-    //         DecoratedBox(
-    //           /// chat bubble decoration
-    //           decoration: BoxDecoration(
-    //             color: isCurrentUser ? Colors.blue : Colors.grey[500],
-    //             // borderRadius: BorderRadius.circular(16),
-    //           ),
-    //           child: Padding(
-    //             padding: const EdgeInsets.all(4),
-    //             child: videoWidget,
-    //             // child: VideoPlayer(VideoPlayerController.network(videoWidget)..initialize().then((_) => setState())),
-    //           ),
-    //         ),
-    //         Padding(
-    //           padding: const EdgeInsets.symmetric(
-    //               horizontal: 8.0, vertical: 1),
-    //           child: Text(
-    //             dateTime,
-    //             style: TextStyle(color: Colors.black26, fontSize: 13),
-    //           ),
-    //         ),
-    //         Padding(
-    //           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-    //           child: Text(
-    //             senderName,
-    //             style: TextStyle(color: Colors.black26, fontSize: 13),
-    //           ),
-    //         )
-    //       ],
-    //     ),
-    //   ),
-    // ) ;
-  }
-}

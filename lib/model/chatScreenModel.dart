@@ -9,7 +9,9 @@ class ChatDetailsModel {
     this.dateTime,
     this.massageType,
     this.url,
-    this.vidurl
+    this.vidurl,
+    this.readMessage,
+    this.ChatsMessageID
   });
 
   String? senderName;
@@ -22,6 +24,8 @@ class ChatDetailsModel {
   String? massageType;
   String? url;
   String? vidurl;
+  bool? readMessage;
+  String? ChatsMessageID;
 
   factory ChatDetailsModel.fromJson(Map<String, dynamic> json) => ChatDetailsModel(
     senderName: json["senderName"],
@@ -34,6 +38,8 @@ class ChatDetailsModel {
     massageType: json["massageType"],
     url: json["url"],
     vidurl: json["vidurl"],
+    readMessage: json["readMessage"],
+    ChatsMessageID: json["ChatsMessageID"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -47,5 +53,7 @@ class ChatDetailsModel {
     "massageType": massageType,
     "url": url,
     "vidurl": vidurl,
+    "readMessage": readMessage,
+    "ChatsMessageID": ChatsMessageID,
   };
 }
