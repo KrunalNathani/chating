@@ -11,8 +11,9 @@ class ChatBubbleText extends StatelessWidget {
     required this.messageType,
     required this.imageUrl,
     // required this.videoWidget,
-    required this.onPressPopup,
-    required this.onTapDownPopup,
+    required this.onPressImagePopup,
+    required this.onTapDownImagePopup,
+    required this.onPressTextPopup,
     // required this.loader,
   }) : super(key: key);
   final String text;
@@ -24,8 +25,9 @@ class ChatBubbleText extends StatelessWidget {
   // final Widget loader;
 
   // final Widget videoWidget;
-  final GestureTapCallback onPressPopup;
-  final Function onTapDownPopup;
+  final GestureTapCallback onPressImagePopup;
+  final Function onTapDownImagePopup;
+  final GestureTapCallback onPressTextPopup;
 
 
 
@@ -48,19 +50,23 @@ class ChatBubbleText extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DecoratedBox(
-                    /// chat bubble decoration
-                    decoration: BoxDecoration(
-                      color: isCurrentUser ? Colors.blue : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(
-                        text,
-                        style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                            color:
-                                isCurrentUser ? Colors.white : Colors.black87),
+                  GestureDetector(
+                    onLongPress: onPressTextPopup,
+                    onTapDown: (details) => onTapDownImagePopup(details),
+                    child: DecoratedBox(
+                      /// chat bubble decoration
+                      decoration: BoxDecoration(
+                        color: isCurrentUser ? Colors.blue : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          text,
+                          style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                              color:
+                                  isCurrentUser ? Colors.white : Colors.black87),
+                        ),
                       ),
                     ),
                   ),
@@ -110,57 +116,15 @@ class ChatBubbleText extends StatelessWidget {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(4),
-                      child: Stack(
-                        children: [
+                      child: GestureDetector(
+                        onLongPress: onPressImagePopup,
+                        onTapDown: (details) => onTapDownImagePopup(details),
 
-                          Image.network(
-                            imageUrl,
-                            height: 150,
-                            fit: BoxFit.contain,
-                          ),
-
-                          // Positioned(
-                          //   bottom: 0,
-                          //   right: 0,
-                          //   child: Container(
-                          //     decoration: BoxDecoration(
-                          //       shape: BoxShape.circle,
-                          //       color: Colors.white,
-                          //     ),
-                          //     height: 35,
-                          //     alignment: Alignment.center,
-                          //     child: IconButton(
-                          //         onPressed: () {
-                          //
-                          //         },
-                          //         icon: Icon(
-                          //           Icons.download,
-                          //           color: Colors.green,
-                          //         )),
-                          //   ),
-                          // ),
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
-                              ),
-                              height: 35,
-                              width: 35,
-                              alignment: Alignment.center,
-                              child: GestureDetector(
-                                onTapDown: (details) => onTapDownPopup(details),
-                                onTap: onPressPopup,
-                                child: Icon(
-                                  Icons.more_vert,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        child: Image.network(
+                          imageUrl,
+                          height: 150,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),

@@ -1,12 +1,14 @@
+import 'package:chating/AuthScreen/LoginScreen.dart';
 import 'package:chating/Screens/ChatScreen.dart';
 import 'package:chating/model/chatScreenModel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ChatHomeScreen extends StatefulWidget {
-  ChatHomeScreen({@required this.UID});
+  ChatHomeScreen({this.UID});
 
   String? UID;
 
@@ -23,7 +25,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   String? receiverFCMToken;
   String? chatRoomID;
 
-  List messageList = [];
+  List userChatRoomID = [];
+  Set? filterChatRoomID;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +37,11 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
           TextButton(
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
+                Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LoginScreen(),
+                    ));
               },
               child: Text(
                 'LOG OUT',
@@ -67,6 +75,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                 children: snapshot.data!.docs.map((document) {
                   print('snap shot id -> ${snapshot.data!.docs.length}');
                   print('snap shot id -> ${document.id}');
+                  print('snap shot id -> ${document.data()}');
+
                   return Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Stack(
@@ -76,7 +86,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                             title: Text(
                                 "${document['fName']} ${document['lName']}"),
                             onTap: () async {
-                              print(widget.UID);
+                              print("widget.UID ${widget.UID}");
 
                               /// find sender Name
                               await FirebaseFirestore.instance
@@ -138,6 +148,10 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                       : '${receiverUID} ${senderUID}';
                               print('chatRoomID ==> ${chatRoomID}');
 
+                              userChatRoomID.add(chatRoomID);
+                              filterChatRoomID = userChatRoomID.toSet();
+                              print('filterChatRoomID ${filterChatRoomID}');
+
                               Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => ChatScreen(
                                   senderName: senderName,
@@ -152,41 +166,40 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                             },
                           ),
 
-                          StreamBuilder(
-                              /// chat room create and create chat massage user and receiver
-                              stream: FirebaseFirestore.instance
-                                  .collection("chat")
-                                  .doc(chatRoomID)
-                                  .collection("Chats").where('receiverUID', isEqualTo: receiverUID)
-                                  .where('readMessage', isEqualTo: false)
-                                  .snapshots(),
-                              builder: (BuildContext context,
-                                  AsyncSnapshot<QuerySnapshot> snapshot) {
-                                if (snapshot.hasData) {
-                                 var result = snapshot.data!.docs.map((e) => e['readMessage']);
-                                  print(result);
-                                  if(result.isNotEmpty){
-                                    messageList.add(result);
-                                    // print(messageList);
-                                    // print(messageList.length);
-                                  } else{
-                                    messageList.clear();
-                                  }
-                                }
+                          chatRoom(receiverUID != null ? document.id : ''),
 
-                                return Positioned(
-                                  right: 0,
-                                  bottom: 0,
-                                  child: Container(alignment: Alignment.center,
-                                    height: 20,
-                                    width: 20,
-                                    decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle),
-                                    child: Text(messageList.length.toString()),
-                                  ),
-                                );
-                              }),
+                          // StreamBuilder(
+                          //
+                          //     /// chat room create and create chat massage user and receiver
+                          //     stream: FirebaseFirestore.instance
+                          //         .collection("chat")
+                          //         .doc(chatRoomID)
+                          //         .collection("Chats")
+                          //         .where('CombineID', isEqualTo: chatRoomID)
+                          //         .where('receiverUID', isEqualTo: receiverUID)
+                          //         .where('readMessage', isEqualTo: false)
+                          //         .snapshots(),
+                          //     builder: (BuildContext context,
+                          //         AsyncSnapshot<QuerySnapshot> snapshot) {
+                          //       if (snapshot.hasData) {
+                          //         print(
+                          //             "dddaaaattaaa ${snapshot.data!.docs.length}");
+                          //       }
+                          //       return Positioned(
+                          //         right: 0,
+                          //         bottom: 0,
+                          //         child: Container(
+                          //           alignment: Alignment.center,
+                          //           height: 20,
+                          //           width: 20,
+                          //           decoration: BoxDecoration(
+                          //               color: Colors.red,
+                          //               shape: BoxShape.circle),
+                          //           child: Text(
+                          //               snapshot.data!.docs.length.toString()),
+                          //         ),
+                          //       );
+                          //     }),
 
                           // StreamBuilder<Object>(
                           //     stream: FirebaseFirestore.instance
@@ -214,6 +227,52 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
               );
             }),
       ]),
+
     );
+  }
+
+  Widget chatRoom(String ID) {
+    print('IDs +> ${ID}');
+    List zz = [];
+
+
+    String _chatRoomID = senderUID.hashCode <= ID.hashCode
+        ? '${senderUID} ${ID}'
+        : '${ID} ${senderUID}';
+
+    return StreamBuilder(
+
+        /// chat room create and create chat massage user and receiver
+        stream: FirebaseFirestore.instance
+            .collection("chat")
+            .doc(_chatRoomID)
+            .collection("Chats")
+            .where('CombineID', isEqualTo: _chatRoomID)
+            .where('receiverUID', isEqualTo: ID)
+            .where('readMessage', isEqualTo: false)
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasData) {
+            print("dddaaaattaaa ${snapshot.data!.docs.length}");
+            zz.add(snapshot.data!.docs.length);
+            print("qqqqq ==> ${zz}");
+          }
+
+          return Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              alignment: Alignment.center,
+              height: 20,
+              width: 20,
+              decoration:
+                  BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+              child: ListView.builder(
+                itemCount: zz.length,
+                itemBuilder: (context, index) => Center(child: Text(zz[index].toString(),style:TextStyle(fontSize: 15),)),
+              ),
+            ),
+          );
+        });
   }
 }

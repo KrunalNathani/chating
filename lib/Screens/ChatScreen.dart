@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:chating/CommonFile/Permission%20Requast.dart';
 import 'package:chating/CommonFile/chat_massage_design.dart';
@@ -87,9 +86,6 @@ class _ChatScreenState extends State<ChatScreen> {
   bool loading = false;
   double progress = 1;
 
-  /// store message id in model
-  String? messageID;
-
   @override
   void initState() {
     // TODO: implement initState
@@ -123,7 +119,14 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.receiverName!),
-        actions: [IconButton(onPressed: () {}, icon: Icon(Icons.ac_unit))],
+        actions: [
+          GestureDetector(
+              onTap: () {
+                _onPressClearAllChatPopup();
+              },
+              onTapDown: (details) => _onTapDown(details),
+              child: Icon(Icons.more_vert))
+        ],
       ),
       body: StreamBuilder(
 
@@ -231,27 +234,18 @@ class _ChatScreenState extends State<ChatScreen> {
                                   //   ..initialize();
                                   // print('uuurl:- ${document['vidurl']}');
 
-                                  /// Showing chatting message
-                                  ///
-
-                                  // var a = FirebaseFirestore.instance
-                                  //      .collection("chat")
-                                  //      .doc(widget.combineID)
-                                  //      .collection("Chats")
-                                  //      .where('url',isEqualTo: document['url'])
-                                  //      .snapshots().forEach((element) {element.docs.forEach((element) {element.data();});});
-                                  //
-
-                                  print('messageID ${messageID}');
-
                                   return ChatBubbleText(
                                     text: document['massage'],
                                     messageType: document['massageType'],
                                     imageUrl: document['url'] ?? '',
-                                    onPressPopup: () {
+                                    onPressImagePopup: () {
                                       _onPress(document['url']);
                                     },
-                                    onTapDownPopup: _onTapDown,
+                                    onTapDownImagePopup: _onTapDown,
+                                    onPressTextPopup: () {
+                                      _onPressTextPopup(document['massage']);
+                                    },
+
                                     //   videoWidget:_controller != null && _controller!.value.isInitialized
                                     //       ? AspectRatio(
                                     //     aspectRatio: _controller!.value.aspectRatio,
@@ -286,8 +280,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                     //       ),
                                     isCurrentUser: widget.receiverUID ==
                                         document['receiverUID'],
+                                    // dateTime:
+                                    //     '${DateFormat.jm().format(EpochToDateTime!)}',
                                     dateTime:
-                                        '${DateFormat.jm().format(EpochToDateTime!)}',
+                                        '${displayTimeAgoFromTimestamp(EpochToDateTime.toString())}',
                                     senderName: widget.receiverUID ==
                                             document['receiverUID']
                                         ? '${widget.senderName}'
@@ -302,237 +298,228 @@ class _ChatScreenState extends State<ChatScreen> {
           }),
 
       /// this is massage typing box, select image and send button
-      bottomNavigationBar: Container(
-          padding: MediaQuery.of(context).viewInsets,
-          color: Colors.grey[300],
-          child: Row(
-            children: [
-              Expanded(
-                // child: PopupMenuButton(
-                //     color: Colors.yellowAccent,
-                //     elevation: 20,
-                //     enabled: true,
-                //     onCanceled: () {
-                //       //do something
-                //     },
-                //     onSelected: (String? value) {
-                //      types = value!;
-                //      print(types);
-                //     },
-                //     itemBuilder: (context) =>
-                //     [
-                //       PopupMenuItem(
-                //         child: Text("Image"),
-                //         value: "Image",
-                //       ),
-                //       PopupMenuItem(
-                //         child: Text("File"),
-                //         value: "File",
-                //       ),
-                //     ]
-                // )
-                child: TextButton.icon(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      elevation: 20,
-                      builder: (context) {
-                        return Container(
-                          height: MediaQuery.of(context).size.height * 0.15,
-                          color: Colors.transparent,
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 5.0),
-                            child: ListView(
-                              children: [
-                                TextButton(
-                                  onPressed: () async {
-                                    await getFromGallery();
-                                    if (imageFiles != null) {
-                                      Navigator.pop(context);
-                                      chatMassage.text = imageFiles.toString();
-                                    }
-                                    if (videoFiles != null) {
-                                      Navigator.pop(context);
-                                      chatMassage.text = videoFiles.toString();
-                                    }
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+              padding: MediaQuery.of(context).viewInsets,
+              color: Colors.grey[300],
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          elevation: 20,
+                          builder: (context) {
+                            return Container(
+                              height: MediaQuery.of(context).size.height * 0.15,
+                              color: Colors.transparent,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 5.0),
+                                child: ListView(
+                                  children: [
+                                    Column(
+                                      children: [
+                                        TextButton(
+                                          onPressed: () async {
+                                            await getFromGallery();
+                                            if (imageFiles != null) {
+                                              Navigator.pop(context);
+                                            }
 
-                                    print("imageFile==> $videoFiles");
-                                  },
-                                  child: Text(
-                                    "Images",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 17),
-                                  ),
-                                  style: ButtonStyle(
-                                      backgroundColor:
-                                          MaterialStateProperty.all(
-                                              Colors.blue)),
+                                            if (videoFiles != null) {
+                                              Navigator.pop(context);
+                                              chatMassage.text =
+                                                  videoFiles.toString();
+                                            }
+
+                                            print("imageFile==> $videoFiles");
+                                          },
+                                          child: Text(
+                                            "Images",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 17),
+                                          ),
+                                          style: ButtonStyle(
+                                              backgroundColor:
+                                                  MaterialStateProperty.all(
+                                                      Colors.blue)),
+                                        ),
+                                      ],
+                                    ),
+                                    // TextButton(
+                                    //   onPressed: () async{
+                                    //
+                                    //     await getVideoFromGallery();
+                                    //
+                                    //     if (videoFiles != null) {
+                                    //       Navigator.pop(context);
+                                    //       chatMassage.text = videoFiles.toString();
+                                    //     }
+                                    //
+                                    //     print("videoFile==> $videoFiles");
+                                    //     types = 'Videos';
+                                    //
+                                    //       // _pickVideo();
+                                    //
+                                    //   },
+                                    //   child: Text(
+                                    //     "Videos",
+                                    //     style: TextStyle(
+                                    //         color: Colors.white, fontSize: 17),
+                                    //   ),
+                                    //   style: ButtonStyle(
+                                    //       backgroundColor:
+                                    //           MaterialStateProperty.all(
+                                    //               Colors.blue)),
+                                    // ),
+                                  ],
                                 ),
-                                // TextButton(
-                                //   onPressed: () async{
-                                //
-                                //     await getVideoFromGallery();
-                                //
-                                //     if (videoFiles != null) {
-                                //       Navigator.pop(context);
-                                //       chatMassage.text = videoFiles.toString();
-                                //     }
-                                //
-                                //     print("videoFile==> $videoFiles");
-                                //     types = 'Videos';
-                                //
-                                //       // _pickVideo();
-                                //
-                                //   },
-                                //   child: Text(
-                                //     "Videos",
-                                //     style: TextStyle(
-                                //         color: Colors.white, fontSize: 17),
-                                //   ),
-                                //   style: ButtonStyle(
-                                //       backgroundColor:
-                                //           MaterialStateProperty.all(
-                                //               Colors.blue)),
-                                // ),
-                              ],
-                            ),
-                          ),
+                              ),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                  icon: Icon(
-                    Icons.add_photo_alternate,
-                    size: 30,
-                  ),
-                  label: Text(''),
-                ),
-              ),
-              Expanded(
-                flex: 4,
-                child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 2),
-                    margin: EdgeInsets.symmetric(horizontal: 5),
-                    child: TextField(
-                      controller: chatMassage,
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Type a message',
+                      icon: Icon(
+                        Icons.add_photo_alternate,
+                        size: 30,
                       ),
-                    )),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 5.0),
-                child: TextButton.icon(
-                  onPressed: () async {
-                    if (chatMassage.text.isNotEmpty) {
-                      types = "text";
-
-                      /// Image upload and download url
-                      if (imageFiles != null) {
-                        setState(() {
-                          urlComplete = true;
-                        });
-
-                        await upload_DownloadURL_File();
-                        print("imageFile==> $imageFiles");
-                        // await downloadURLExample();
-                        types = "Image";
-                      }
-
-                      /// Video upload and download url
-                      if (videoFiles != null) {
-                        setState(() {
-                          vidUrlComplete = true;
-                        });
-
-                        // await uploadVideoFile();
-                        print("vidFile==> $videoFiles");
-                        await downloadVideoURLExample();
-                        types = "Video";
-                      }
-
-                      /// create chat and chats entry in fire store
-                      final FirebaseFirestore fireStore =
-                          FirebaseFirestore.instance;
-                      // print('chatMAssages ;- ${chatMassage.text}');
-
-                      /// create two uer combine IDs and add pass model
-                      final CollectionReference _mainCollection =
-                          fireStore.collection('chat');
-
-                      /// DateTime to convert ephoch time
-                      final DateTime date = DateTime.now();
-
-                      dateTimeToEpoch = date.millisecondsSinceEpoch;
-                      // print('$dateTimeToEpoch (milliseconds)');
-
-                      /// first find text message doucument id and store id in messageID and this value given model
+                      label: Text(''),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 4,
+                    child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 2),
+                        margin: EdgeInsets.symmetric(horizontal: 5),
+                        child: TextField(
+                          controller: chatMassage,
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Type a message',
+                          ),
+                        )),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 5.0),
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        types = "text";
+                        if (imageFiles != null && chatMassage.text.isEmpty ||
+                            imageFiles == null && chatMassage.text.isNotEmpty) {
 
 
+                          /// Image upload and download url
+                          if (imageFiles != null) {
+                            setState(() {
+                              urlComplete = true;
+                            });
+
+                            await upload_DownloadURL_File();
+                            print("imageFile==> $imageFiles");
+                            // await downloadURLExample();
+                            types = "Image";
+                          }
+
+                          /// Video upload and download url
+                          if (videoFiles != null) {
+                            setState(() {
+                              vidUrlComplete = true;
+                            });
+
+                            // await uploadVideoFile();
+                            print("vidFile==> $videoFiles");
+                            await downloadVideoURLExample();
+                            types = "Video";
+                          }
+
+                          /// create chat and chats entry in fire store
+                          final FirebaseFirestore fireStore =
+                              FirebaseFirestore.instance;
+                          // print('chatMAssages ;- ${chatMassage.text}');
+
+                          /// create two uer combine IDs and add pass model
+                          final CollectionReference _mainCollection =
+                              fireStore.collection('chat');
+
+                          /// DateTime to convert ephoch time
+                          final DateTime date = DateTime.now();
+
+                          dateTimeToEpoch = date.millisecondsSinceEpoch;
+                          print('dddddddd ==> $dateTimeToEpoch (milliseconds)');
 
 
-                    // FirebaseFirestore.instance
-                    //       .collection("chat")
-                    //       .doc(widget.combineID)
-                    //       .collection("Chats")
-                    //       .doc()
-                    //       .get();
+                          /// chetDetailsModel through add data in firestore
+                          ChatDetailsModel model = ChatDetailsModel(
+                              senderName: widget.senderName,
+                              receiverName: widget.receiverName,
+                              token: widget.receiverToken,
+                              massage: chatMassage.text,
+                              senderUid: widget.senderUID,
+                              receiverUid: widget.receiverUID,
+                              dateTime: dateTimeToEpoch.toString(),
+                              massageType: types,
+                              url: imgUrl1,
+                              vidurl: vidUrl,
+                              CombineID: widget.combineID,
+                              readMessage: false);
 
-                      ChatDetailsModel model = ChatDetailsModel(
-                          senderName: widget.senderName,
-                          receiverName: widget.receiverName,
-                          token: widget.receiverToken,
-                          massage: chatMassage.text,
-                          senderUid: widget.senderUID,
-                          receiverUid: widget.receiverUID,
-                          dateTime: dateTimeToEpoch.toString(),
-                          massageType: types,
-                          url: imgUrl1,
-                          vidurl: vidUrl,
-                          // ChatsMessageID: ,
-                          readMessage: false);
+                          /// this types is selected and after value is null so this types = '';
+                          types = '';
+                          imgUrl1 = '';
+                          vidUrl = '';
 
-                      /// this types is selected and after value is null so this types = '';
-                      types = '';
-                      imgUrl1 = '';
-                      vidUrl = '';
-                      messageID = '';
-                      /// Chat Massage TextField Clear
-                      chatMassage.clear();
+                          /// Chat Massage TextField Clear
+                          chatMassage.clear();
 
-                      print("modelllll => ${model.toJson()}");
+                          print("modelllll => ${model.toJson()}");
 
-                      /// create two uer chatting collection in firebase
-                      await _mainCollection
-                          .doc('${widget.combineID}')
-                          .collection('Chats')
-                          .add(model.toJson())
-                          .catchError((e) => print(e));
+                          /// create two uer chatting collection in firebase
+                          await _mainCollection
+                              .doc('${widget.combineID}')
+                              .collection('Chats')
+                              .add(model.toJson())
+                              .catchError((e) => print(e));
 
-                      /// send notification receiver
-                      sendNotification(
-                          chatMassage.text,
-                          widget.senderName.toString(),
-                          widget.receiverFCMToken.toString());
-                    }
-                  },
-                  icon: Icon(Icons.send),
-                  label: Text(''),
-                ),
-              )
-            ],
-          )),
+                          /// send notification receiver
+                          sendNotification(
+                              chatMassage.text,
+                              widget.senderName.toString(),
+                              widget.receiverFCMToken.toString());
+                        }
+
+                      },
+                      icon: Icon(Icons.send),
+                      label: Text(''),
+                    ),
+                  )
+                ],
+              )),
+          imageFiles != null
+              ? Container(
+                  padding: EdgeInsets.all(5),
+                  height: 100,
+                  width: double.infinity,
+                  child: Image.file(imageFiles!),
+                )
+              : SizedBox()
+        ],
+      ),
     );
   }
 
+  /// message long press and open popup menu, so this popup menu open this position
   _onTapDown(TapDownDetails details) {
     debugPrint("--> Detail --> $details ");
 
     _tapPosition = details.globalPosition;
   }
 
+  /// Image message long press so open popup menu button
   _onPress(String? url) {
     final RenderBox overlay =
         Overlay.of(context)!.context.findRenderObject() as RenderBox;
@@ -595,12 +582,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           TextButton(
                             child: new Text("delete"),
                             onPressed: () {
-                              // FirebaseFirestore.instance
-                              //     .collection("chat")
-                              //     .doc(widget.combineID)
-                              //     .collection("Chats")
-                              //     .where('', isEqualTo: '')
-                              //     .snapshots();
+                              deleteImageTyeMessage(url);
+                              Navigator.pop(context);
                             },
                           ),
                         ],
@@ -627,6 +610,144 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  /// text message long press so open popup menu button
+  _onPressTextPopup(String? message) {
+    final RenderBox overlay =
+        Overlay.of(context)!.context.findRenderObject() as RenderBox;
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+          Rect.fromPoints(_tapPosition!, _tapPosition!),
+          Offset.zero & overlay.size),
+      items: [
+        PopupMenuItem<String>(
+            child: TextButton.icon(
+                onPressed: () {
+                  Clipboard.setData(new ClipboardData(text: message))
+                      .then((value) {
+                    //only if ->
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Copy Successfully')));
+                  });
+                  print(
+                      "uuurl ${Clipboard.setData(new ClipboardData(text: message))}");
+                },
+                icon: Icon(Icons.copy),
+                label: Text('Copy')),
+            value: '1'),
+        PopupMenuItem<String>(
+            child: TextButton.icon(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      // return object of type Dialog
+                      return AlertDialog(
+                        title: new Text("Alert"),
+                        content: new Text("Are you sure delete message!"),
+                        actions: <Widget>[
+                          // usually buttons at the bottom of the dialog
+                          TextButton(
+                            child: new Text("Close"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: new Text("delete"),
+                            onPressed: () {
+                              deleteTextTypeMessage(message);
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                icon: Icon(Icons.delete),
+                label: Text('Delete')),
+            value: '2'),
+      ],
+      elevation: 8.0,
+    ).then<void>((String? itemSelected) {
+      print("items ${itemSelected}");
+      // if (itemSelected == null) return;
+      //
+      // if(itemSelected == "1"){
+      //   //code here
+      // }else if(itemSelected == "2"){
+      //   //code here
+      // }else{
+      //   //code here
+      // }
+    });
+  }
+
+  /// Clear All chats
+  _onPressClearAllChatPopup() {
+    final RenderBox overlay =
+        Overlay.of(context)!.context.findRenderObject() as RenderBox;
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+          Rect.fromPoints(_tapPosition!, _tapPosition!),
+          Offset.zero & overlay.size),
+      items: [
+        PopupMenuItem<String>(
+            child: TextButton.icon(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      // return object of type Dialog
+                      return AlertDialog(
+                        title: new Text("Alert"),
+                        content: new Text("Are you sure Clear Chat!"),
+                        actions: <Widget>[
+                          // usually buttons at the bottom of the dialog
+                          TextButton(
+                            child: new Text("Close"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: new Text("Clear"),
+                            onPressed: () async {
+                              await clearChat();
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                icon: Icon(Icons.delete),
+                label: Text('Clear Chat')),
+            value: '2'),
+      ],
+      elevation: 8.0,
+    ).then<void>((String? itemSelected) {
+      print("items ${itemSelected}");
+      // if (itemSelected == null) return;
+      //
+      // if(itemSelected == "1"){
+      //   //code here
+      // }else if(itemSelected == "2"){
+      //   //code here
+      // }else{
+      //   //code here
+      // }
+    });
+  }
+
+  /// image pickup in gallery
   getFromGallery() async {
     XFile? pickedFile = await ImagePicker().pickImage(
         source: ImageSource.gallery, maxHeight: 1800, maxWidth: 1800);
@@ -639,6 +760,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// image upload cloud store and get image url
   Future<void> upload_DownloadURL_File() async {
     var storageImage = FirebaseStorage.instance.ref(imageFiles!.path);
     UploadTask task1 = storageImage.putFile(imageFiles!);
@@ -665,6 +787,74 @@ class _ChatScreenState extends State<ChatScreen> {
 //
 //   }
 
+  /// delete message
+  deleteTextTypeMessage(String? message) {
+    print('selectDateTime ${dateTimeToEpoch}');
+    FirebaseFirestore.instance
+        .collection("chat")
+        .doc(widget.combineID)
+        .collection("Chats")
+        // .where("dateTime", isEqualTo: dateTimeToEpoch.toString())
+        .where('massage', isEqualTo: message)
+        .get()
+        .then((value) {
+      value.docs.forEach((element) {
+        FirebaseFirestore.instance
+            .collection("chat")
+            .doc(widget.combineID)
+            .collection("Chats")
+            .doc(element.id)
+            .delete()
+            .then((value) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('message delete successfully!')));
+          print("Success!");
+        });
+      });
+    });
+  }
+
+  /// delete message
+  deleteImageTyeMessage(String? url) {
+    print('selectDateTime ${dateTimeToEpoch}');
+    FirebaseFirestore.instance
+        .collection("chat")
+        .doc(widget.combineID)
+        .collection("Chats")
+        // .where("dateTime", isEqualTo: dateTimeToEpoch.toString())
+        .where('url', isEqualTo: url)
+        .get()
+        .then((value) {
+      value.docs.forEach((element) {
+        FirebaseFirestore.instance
+            .collection("chat")
+            .doc(widget.combineID)
+            .collection("Chats")
+            .doc(element.id)
+            .delete()
+            .then((value) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('message delete successfully!')));
+          print("Success!");
+        });
+      });
+    });
+  }
+
+  /// clear Chat
+  clearChat() async {
+    final instance = FirebaseFirestore.instance;
+    final batch = instance.batch();
+    var collection =
+        instance.collection('chat').doc(widget.combineID).collection('Chats');
+    var snapshots = await collection.get();
+    for (var doc in snapshots.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
+  /// message show or not function
   readMessage(id, id1) async {
     FirebaseFirestore.instance
         .collection("chat")
@@ -673,14 +863,6 @@ class _ChatScreenState extends State<ChatScreen> {
         .where('receiverUID', isEqualTo: id1)
         .snapshots()
         .listen((event) async {
-      // var a = await FirebaseFirestore.instance
-      //     .collection("chat")
-      //     .doc(widget.combineID)
-      //     .collection("Chats")
-      //     .get();
-      //
-      // print("dataGet ++> ${a.docs.map((e) => e.data())}");
-
       final DocumentReference documentReference = FirebaseFirestore.instance
           .collection("chat")
           .doc(widget.combineID)
@@ -690,6 +872,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  /// video pickup from gallery
   getVideoFromGallery() async {
     XFile? pickedFiles =
         await ImagePicker().pickVideo(source: ImageSource.gallery);
@@ -835,67 +1018,46 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     return false;
   }
+
+  static String displayTimeAgoFromTimestamp(String? timestamp) {
+    if(timestamp != null){
+
+    }
+
+
+
+    DateTime messageDate = Timestamp.fromMillisecondsSinceEpoch(int.parse(timestamp!)).toDate();
+
+    final int diffInHours = DateTime.now().difference(messageDate).inHours;
+
+    String? timeAgo = '';
+    String? timeUnit = '';
+    int timeValue = 0;
+
+    if (diffInHours < 1) {
+      final diffInMinutes = DateTime.now().difference(messageDate).inMinutes;
+      timeValue = diffInMinutes;
+      timeUnit = 'minute';
+    } else if (diffInHours < 24) {
+      timeValue = diffInHours;
+      timeUnit = 'hour';
+    } else if (diffInHours >= 24 && diffInHours < 24 * 7) {
+      timeValue = (diffInHours / 24).floor();
+      timeUnit = 'day';
+    } else if (diffInHours >= 24 * 7 && diffInHours < 24 * 30) {
+      timeValue = (diffInHours / (24 * 7)).floor();
+      timeUnit = 'week';
+    } else if (diffInHours >= 24 * 30 && diffInHours < 24 * 12 * 30) {
+      timeValue = (diffInHours / (24 * 30)).floor();
+      timeUnit = 'month';
+    } else {
+      timeValue = (diffInHours / (24 * 365)).floor();
+      timeUnit = 'year';
+    }
+
+    timeAgo = timeValue == 0 ? 'now' : timeValue.toString() + ' ' + timeUnit;
+    timeAgo += timeValue > 1 ? 's' : '';
+
+    return timeValue == 0 ? timeAgo : timeAgo + ' ago';
+  }
 }
-
-// Future<bool> _requestPermission(Permission permission) async {
-//   if (await permission.isGranted) {
-//     return true;
-//   } else {
-//     var result = await permission.request();
-//     if (result == PermissionStatus.granted) {
-//       return true;
-//     }
-//   }
-//   return false;
-// }
-
-// Future<void> downloadFileExample(String ref) async {
-//
-//   Directory directory;
-//
-//   if (Platform.isAndroid) {
-//     if (await _requestPermission(Permission.storage)) {
-//       directory = (await getExternalStorageDirectory())!;
-//
-//       String newPath = "";
-//
-//       print(directory);
-//       List<String> paths = directory.path.split("/");
-//       for (int x = 1; x < paths.length; x++) {
-//         String folder = paths[x];
-//         if (folder != "Android") {
-//           newPath += "/" + folder;
-//         } else {
-//           break;
-//         }
-//       }
-//       newPath = newPath + "/FireDemo";
-//       directory = Directory(newPath);
-//
-//     } else {
-//       return ;
-//     }
-//   } else {
-//     if (await _requestPermission(Permission.photos)) {
-//       directory = await getTemporaryDirectory();
-//     } else {
-//       return ;
-//     }
-//   }
-//   if (!await directory.exists()) {
-//     await directory.create(recursive: true);
-//   }
-//
-//
-//   File downloadToFile = File('${directory.path}/$ref');
-//
-//   print(downloadToFile);
-//
-//   try {
-//     await FirebaseStorage.instance
-//         .ref(ref)
-//         .writeToFile(downloadToFile);
-//   } on firebase_core.FirebaseException catch (e) {
-//     // e.g, e.code == 'canceled'
-//   }
-// }

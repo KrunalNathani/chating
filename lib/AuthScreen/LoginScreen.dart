@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 String email = "";
 String yourPassword = "";
@@ -27,6 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _key = GlobalKey<FormState>();
 
   bool loggingIn = false;
+
+  String? userID;
 
   void login() async {
     FocusScope.of(context).unfocus();
@@ -70,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     FocusManager.instance.primaryFocus?.unfocus();
     // TODO: implement initState
-
+    FirebaseAuth.instance.currentUser != null ?  ChatHomeScreen(UID: userID,): LoginScreen();
     super.initState();
   }
 
@@ -152,8 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     password: passwordController.text);
                             setState(() {});
 
-                            String? userID = userCredential.user!.uid;
-
+                            userID = userCredential.user!.uid;
                             // CollectionReference users = FirebaseFirestore.instance.collection('userDetail');
 
                             // FirebaseMessaging.instance.getToken().then((token){
@@ -172,7 +175,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 .then((value) => print("User Updated"))
                                 .catchError((error) =>
                                     print("Failed to update user: $error"));
-
 
                             Navigator.pushAndRemoveUntil(
                                 context,

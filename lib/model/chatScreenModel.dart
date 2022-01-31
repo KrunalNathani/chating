@@ -11,7 +11,7 @@ class ChatDetailsModel {
     this.url,
     this.vidurl,
     this.readMessage,
-    this.ChatsMessageID
+    this.CombineID
   });
 
   String? senderName;
@@ -25,7 +25,7 @@ class ChatDetailsModel {
   String? url;
   String? vidurl;
   bool? readMessage;
-  String? ChatsMessageID;
+  String? CombineID;
 
   factory ChatDetailsModel.fromJson(Map<String, dynamic> json) => ChatDetailsModel(
     senderName: json["senderName"],
@@ -39,7 +39,7 @@ class ChatDetailsModel {
     url: json["url"],
     vidurl: json["vidurl"],
     readMessage: json["readMessage"],
-    ChatsMessageID: json["ChatsMessageID"],
+    CombineID: json["CombineID"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -54,6 +54,6 @@ class ChatDetailsModel {
     "url": url,
     "vidurl": vidurl,
     "readMessage": readMessage,
-    "ChatsMessageID": ChatsMessageID,
+    "CombineID": CombineID,
   };
 }
