@@ -92,9 +92,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
     /// Scroll automatically code
     if (_scrollController.positions.isNotEmpty) {
-      WidgetsBinding.instance?.addPostFrameCallback((_) => {
-            _scrollController.jumpTo(_scrollController.position.maxScrollExtent)
-          });
+      WidgetsBinding.instance?.addPostFrameCallback((_) =>
+      {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent)
+      });
     }
     print("currentUserID ==> ${widget.senderUID}");
     // if(widget.receiverUID == ){}
@@ -130,7 +131,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: StreamBuilder(
 
-          /// chat room create and create chat massage user and receiver
+        /// chat room create and create chat massage user and receiver
           stream: FirebaseFirestore.instance
               .collection("chat")
               .doc(widget.combineID)
@@ -148,152 +149,158 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: urlComplete
                     ? CircularProgressIndicator()
                     : Text(
-                        "No recent chats found",
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
+                  "No recent chats found",
+                  style: TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                ),
               );
             } else {
               return urlComplete
                   ? Center(child: CircularProgressIndicator())
                   : loading
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Center(
-                                child: CircularProgressIndicator(
-                              color: Colors.green,
-                              value: progress,
-                              strokeWidth: 5,
-                              backgroundColor: Colors.red,
-                            )),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Text(
-                              "Downloading, please wait ...",
-                              style:
-                                  TextStyle(color: Colors.black, fontSize: 15),
-                            )
-                          ],
-                        )
-                      : SingleChildScrollView(
-                          controller: _scrollController,
-                          // primary: true,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ListView(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                children: snapshot.data!.docs.map((document) {
-                                  print('docID = ${document.id}');
+                  ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.green,
+                        value: progress,
+                        strokeWidth: 5,
+                        backgroundColor: Colors.red,
+                      )),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Text(
+                    "Downloading, please wait ...",
+                    style:
+                    TextStyle(color: Colors.black, fontSize: 15),
+                  )
+                ],
+              )
+                  : SingleChildScrollView(
+                controller: _scrollController,
+                // primary: true,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ListView(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      children: snapshot.data!.docs.map((document) {
+                        // print('docID = ${document.id}');
+                        // print('dateTime = ${document['dateTime']}');
+                        // print('dateTime = ${document['dateTime'].runtimeType}');
+                        // print('dateTime = ${int.parse(document['dateTime'])}');
 
-                                  EpochToDateTime =
-                                      DateTime.fromMillisecondsSinceEpoch(
-                                          int.parse(document['dateTime']));
-                                  // print(DateFormat.jm().format(EpochToDateTime!));
-                                  // print('snap id ==>>>> ${widget.receiverUID}');
 
-                                  print(
-                                      'documentwww ${document['receiverUID']}');
+                        EpochToDateTime =
+                            DateTime.fromMillisecondsSinceEpoch(
+                                int.parse("${document['dateTime']}")
 
-                                  /// autoscroll is not Empty then this scroll is start
-                                  if (_scrollController.positions.isNotEmpty) {
-                                    WidgetsBinding.instance
-                                        ?.addPostFrameCallback((_) => {
-                                              _scrollController.jumpTo(
-                                                  _scrollController
-                                                      .position.maxScrollExtent)
-                                            });
-                                    // print("LiveTime => ${DateFormat.jm().format(DateTime.now())}");
-                                  }
+                            );
+                        // print(DateFormat.jm().format(EpochToDateTime!));
+                        // print('dateTime==>>>> ${EpochToDateTime}');
+                        print("messageDAte ${EpochToDateTime}");
 
-                                  // print("massageTime => ${DateFormat.jm().format(EpochToDateTime!)}");
+                        /// autoscroll is not Empty then this scroll is start
+                        if (_scrollController.positions.isNotEmpty) {
+                          WidgetsBinding.instance
+                              ?.addPostFrameCallback((_) =>
+                          {
+                            _scrollController.jumpTo(
+                                _scrollController
+                                    .position.maxScrollExtent)
+                          });
+                          // print("LiveTime => ${DateFormat.jm().format(DateTime.now())}");
+                        }
 
-                                  if (widget.senderUID !=
-                                      document['senderUID']) {
-                                    print("check Condition and data add");
-                                    readMessage(
-                                        document.id, document['receiverUID']);
-                                    // print("isMassageRead not match date");
-                                    // print("isMassageRead not match date = ${isMassageRead}");
-                                  } else {
-                                    print("data not add");
-                                  }
-                                  // else {
-                                  //   //
-                                  //   isMassageRead = false;
-                                  //   // readMessage(document.id);
-                                  //   print("isMassageRead match date");
-                                  //   // print("isMassageRead match date = ${isMassageRead}");
-                                  // }
+                        // print("massageTime => ${DateFormat.jm().format(EpochToDateTime!)}");
 
-                                  // _controller = VideoPlayerController.network(
-                                  //     document['vidurl'])
-                                  //   ..initialize();
-                                  // print('uuurl:- ${document['vidurl']}');
+                        if (widget.senderUID !=
+                            document['senderUID']) {
+                          print("check Condition and data add");
+                          readMessage(
+                              document.id, document['receiverUID']);
+                          // print("isMassageRead not match date");
+                          // print("isMassageRead not match date = ${isMassageRead}");
+                        } else {
+                          print("data not add");
+                        }
+                        // else {
+                        //   //
+                        //   isMassageRead = false;
+                        //   // readMessage(document.id);
+                        //   print("isMassageRead match date");
+                        //   // print("isMassageRead match date = ${isMassageRead}");
+                        // }
 
-                                  return ChatBubbleText(
-                                    text: document['massage'],
-                                    messageType: document['massageType'],
-                                    imageUrl: document['url'] ?? '',
-                                    onPressImagePopup: () {
-                                      _onPress(document['url']);
-                                    },
-                                    onTapDownImagePopup: _onTapDown,
-                                    onPressTextPopup: () {
-                                      _onPressTextPopup(document['massage']);
-                                    },
+                        // _controller = VideoPlayerController.network(
+                        //     document['vidurl'])
+                        //   ..initialize();
+                        // print('uuurl:- ${document['vidurl']}');
 
-                                    //   videoWidget:_controller != null && _controller!.value.isInitialized
-                                    //       ? AspectRatio(
-                                    //     aspectRatio: _controller!.value.aspectRatio,
-                                    //     child: InkWell(
-                                    //       onTap: () {
-                                    //         setState(() {
-                                    //           _controller!.value.isPlaying
-                                    //               ? _controller!.pause()
-                                    //               : _controller!.play();
-                                    //         });
-                                    //       },
-                                    //       child: VideoPlayer(_controller!),
-                                    //     ),
-                                    //   )
-                                    //       : SizedBox(height: 50,) ,
-                                    //
-                                    //   onPress: (){
-                                    //     print('object');
-                                    //     // downloadFileExample(document['url']);
-                                    //     // downloadFileExample(document['url']);
-                                    // },
-                                    // isCurrentUser: false,
-                                    // loader: loading
-                                    //     ? Center(
-                                    //         child: CircularProgressIndicator(
-                                    //         color: Colors.green,
-                                    //         value: progress,
-                                    //       ))
-                                    //     : Container(
-                                    //         height: 20,
-                                    //         color: Colors.red,
-                                    //       ),
-                                    isCurrentUser: widget.receiverUID ==
-                                        document['receiverUID'],
-                                    // dateTime:
-                                    //     '${DateFormat.jm().format(EpochToDateTime!)}',
-                                    dateTime:
-                                        '${displayTimeAgoFromTimestamp(EpochToDateTime.toString())}',
-                                    senderName: widget.receiverUID ==
-                                            document['receiverUID']
-                                        ? '${widget.senderName}'
-                                        : '${widget.receiverName}',
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ),
+                        return ChatBubbleText(
+                          text: document['massage'],
+                          messageType: document['massageType'],
+                          imageUrl: document['url'] ?? '',
+                          onPressImagePopup: () {
+                            _onPress(document['url']);
+                          },
+                          onTapDownImagePopup: _onTapDown,
+                          onPressTextPopup: () {
+                            _onPressTextPopup(document['massage']);
+                          },
+
+                          //   videoWidget:_controller != null && _controller!.value.isInitialized
+                          //       ? AspectRatio(
+                          //     aspectRatio: _controller!.value.aspectRatio,
+                          //     child: InkWell(
+                          //       onTap: () {
+                          //         setState(() {
+                          //           _controller!.value.isPlaying
+                          //               ? _controller!.pause()
+                          //               : _controller!.play();
+                          //         });
+                          //       },
+                          //       child: VideoPlayer(_controller!),
+                          //     ),
+                          //   )
+                          //       : SizedBox(height: 50,) ,
+                          //
+                          //   onPress: (){
+                          //     print('object');
+                          //     // downloadFileExample(document['url']);
+                          //     // downloadFileExample(document['url']);
+                          // },
+                          // isCurrentUser: false,
+                          // loader: loading
+                          //     ? Center(
+                          //         child: CircularProgressIndicator(
+                          //         color: Colors.green,
+                          //         value: progress,
+                          //       ))
+                          //     : Container(
+                          //         height: 20,
+                          //         color: Colors.red,
+                          //       ),
+                          isCurrentUser: widget.receiverUID ==
+                              document['receiverUID'],
+                          // dateTime:
+                          //     '${DateFormat.jm().format(EpochToDateTime!)}',
+                          dateTime:
+                          '${displayTimeAgoFromTimestamp(
+                              EpochToDateTime.toString())}',
+                          senderName: widget.receiverUID ==
+                              document['receiverUID']
+                              ? '${widget.senderName}'
+                              : '${widget.receiverName}',
                         );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              );
             }
           }),
 
@@ -302,7 +309,9 @@ class _ChatScreenState extends State<ChatScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-              padding: MediaQuery.of(context).viewInsets,
+              padding: MediaQuery
+                  .of(context)
+                  .viewInsets,
               color: Colors.grey[300],
               child: Row(
                 children: [
@@ -314,11 +323,14 @@ class _ChatScreenState extends State<ChatScreen> {
                           elevation: 20,
                           builder: (context) {
                             return Container(
-                              height: MediaQuery.of(context).size.height * 0.15,
+                              height: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height * 0.15,
                               color: Colors.transparent,
                               child: Padding(
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 5.0),
+                                const EdgeInsets.symmetric(horizontal: 5.0),
                                 child: ListView(
                                   children: [
                                     Column(
@@ -346,8 +358,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                           ),
                                           style: ButtonStyle(
                                               backgroundColor:
-                                                  MaterialStateProperty.all(
-                                                      Colors.blue)),
+                                              MaterialStateProperty.all(
+                                                  Colors.blue)),
                                         ),
                                       ],
                                     ),
@@ -411,8 +423,6 @@ class _ChatScreenState extends State<ChatScreen> {
                         types = "text";
                         if (imageFiles != null && chatMassage.text.isEmpty ||
                             imageFiles == null && chatMassage.text.isNotEmpty) {
-
-
                           /// Image upload and download url
                           if (imageFiles != null) {
                             setState(() {
@@ -444,14 +454,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
                           /// create two uer combine IDs and add pass model
                           final CollectionReference _mainCollection =
-                              fireStore.collection('chat');
+                          fireStore.collection('chat');
 
                           /// DateTime to convert ephoch time
                           final DateTime date = DateTime.now();
 
                           dateTimeToEpoch = date.millisecondsSinceEpoch;
                           print('dddddddd ==> $dateTimeToEpoch (milliseconds)');
-
 
                           /// chetDetailsModel through add data in firestore
                           ChatDetailsModel model = ChatDetailsModel(
@@ -491,7 +500,6 @@ class _ChatScreenState extends State<ChatScreen> {
                               widget.senderName.toString(),
                               widget.receiverFCMToken.toString());
                         }
-
                       },
                       icon: Icon(Icons.send),
                       label: Text(''),
@@ -501,11 +509,11 @@ class _ChatScreenState extends State<ChatScreen> {
               )),
           imageFiles != null
               ? Container(
-                  padding: EdgeInsets.all(5),
-                  height: 100,
-                  width: double.infinity,
-                  child: Image.file(imageFiles!),
-                )
+            padding: EdgeInsets.all(5),
+            height: 100,
+            width: double.infinity,
+            child: Image.file(imageFiles!),
+          )
               : SizedBox()
         ],
       ),
@@ -522,7 +530,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Image message long press so open popup menu button
   _onPress(String? url) {
     final RenderBox overlay =
-        Overlay.of(context)!.context.findRenderObject() as RenderBox;
+    Overlay.of(context)!.context.findRenderObject() as RenderBox;
 
     showMenu<String>(
       context: context,
@@ -539,7 +547,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         SnackBar(content: Text('Copy Successfully')));
                   });
                   print(
-                      "uuurl ${Clipboard.setData(new ClipboardData(text: url))}");
+                      "uuurl ${Clipboard.setData(
+                          new ClipboardData(text: url))}");
                 },
                 icon: Icon(Icons.copy),
                 label: Text('Copy')),
@@ -613,7 +622,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// text message long press so open popup menu button
   _onPressTextPopup(String? message) {
     final RenderBox overlay =
-        Overlay.of(context)!.context.findRenderObject() as RenderBox;
+    Overlay.of(context)!.context.findRenderObject() as RenderBox;
 
     showMenu<String>(
       context: context,
@@ -631,7 +640,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         SnackBar(content: Text('Copy Successfully')));
                   });
                   print(
-                      "uuurl ${Clipboard.setData(new ClipboardData(text: message))}");
+                      "uuurl ${Clipboard.setData(
+                          new ClipboardData(text: message))}");
                 },
                 icon: Icon(Icons.copy),
                 label: Text('Copy')),
@@ -689,7 +699,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Clear All chats
   _onPressClearAllChatPopup() {
     final RenderBox overlay =
-        Overlay.of(context)!.context.findRenderObject() as RenderBox;
+    Overlay.of(context)!.context.findRenderObject() as RenderBox;
 
     showMenu<String>(
       context: context,
@@ -794,7 +804,7 @@ class _ChatScreenState extends State<ChatScreen> {
         .collection("chat")
         .doc(widget.combineID)
         .collection("Chats")
-        // .where("dateTime", isEqualTo: dateTimeToEpoch.toString())
+    // .where("dateTime", isEqualTo: dateTimeToEpoch.toString())
         .where('massage', isEqualTo: message)
         .get()
         .then((value) {
@@ -821,7 +831,7 @@ class _ChatScreenState extends State<ChatScreen> {
         .collection("chat")
         .doc(widget.combineID)
         .collection("Chats")
-        // .where("dateTime", isEqualTo: dateTimeToEpoch.toString())
+    // .where("dateTime", isEqualTo: dateTimeToEpoch.toString())
         .where('url', isEqualTo: url)
         .get()
         .then((value) {
@@ -846,7 +856,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final instance = FirebaseFirestore.instance;
     final batch = instance.batch();
     var collection =
-        instance.collection('chat').doc(widget.combineID).collection('Chats');
+    instance.collection('chat').doc(widget.combineID).collection('Chats');
     var snapshots = await collection.get();
     for (var doc in snapshots.docs) {
       batch.delete(doc.reference);
@@ -875,7 +885,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// video pickup from gallery
   getVideoFromGallery() async {
     XFile? pickedFiles =
-        await ImagePicker().pickVideo(source: ImageSource.gallery);
+    await ImagePicker().pickVideo(source: ImageSource.gallery);
 
     if (pickedFiles != null) {
       setState(() {
@@ -957,10 +967,10 @@ class _ChatScreenState extends State<ChatScreen> {
         print("direc => $directory");
         await dio.download(url, saveFile.path,
             onReceiveProgress: (value1, value2) {
-          setState(() {
-            progress = value1 / value2;
-          });
-        });
+              setState(() {
+                progress = value1 / value2;
+              });
+            });
 
         if (Platform.isIOS) {
           await ImageGallerySaver.saveFile(saveFile.path,
@@ -973,10 +983,10 @@ class _ChatScreenState extends State<ChatScreen> {
         print("saveFile => $saveFile");
         await dio.download(url, saveFile.path,
             onReceiveProgress: (value1, value2) {
-          setState(() {
-            progress = value1 / value2;
-          });
-        });
+              setState(() {
+                progress = value1 / value2;
+              });
+            });
 
         if (Platform.isIOS) {
           await ImageGallerySaver.saveFile(saveFile.path,
@@ -995,7 +1005,7 @@ class _ChatScreenState extends State<ChatScreen> {
     // for if the file is successfully or not\
 
     bool downloaded =
-        await saveImage(imageDownload!, "v_${DateTime.now()}.jpg");
+    await saveImage(imageDownload!, "v_${DateTime.now()}.jpg");
 
     if (downloaded) {
       ScaffoldMessenger.of(context)
@@ -1020,22 +1030,34 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   static String displayTimeAgoFromTimestamp(String? timestamp) {
-    if(timestamp != null){
+    // final year = int.parse(timestamp!.substring(0, 4));
+    // final month = int.parse(timestamp.substring(5, 7));
+    // final day = int.parse(timestamp.substring(8, 10));
+    // final hour = int.parse(timestamp.substring(11, 13));
+    // final minute = int.parse(timestamp.substring(14, 16));
 
-    }
 
+    // final DateTime videoDate = DateTime(year, month, day, hour, minute);
+    // final int diffInHours = DateTime.now().difference(videoDate).inHours;
 
+    // DateTime messageDate = Timestamp.fromMillisecondsSinceEpoch(int.parse(timestamp!)).toDate();
 
-    DateTime messageDate = Timestamp.fromMillisecondsSinceEpoch(int.parse(timestamp!)).toDate();
+    DateTime messageDate = DateTime.parse(timestamp!);
 
-    final int diffInHours = DateTime.now().difference(messageDate).inHours;
+    final int diffInHours = DateTime
+        .now()
+        .difference(messageDate)
+        .inHours;
 
     String? timeAgo = '';
     String? timeUnit = '';
     int timeValue = 0;
 
     if (diffInHours < 1) {
-      final diffInMinutes = DateTime.now().difference(messageDate).inMinutes;
+      final diffInMinutes = DateTime
+          .now()
+          .difference(messageDate)
+          .inMinutes;
       timeValue = diffInMinutes;
       timeUnit = 'minute';
     } else if (diffInHours < 24) {
@@ -1055,9 +1077,55 @@ class _ChatScreenState extends State<ChatScreen> {
       timeUnit = 'year';
     }
 
-    timeAgo = timeValue == 0 ? 'now' : timeValue.toString() + ' ' + timeUnit;
+    timeAgo = timeValue.toString() + ' ' + timeUnit;
     timeAgo += timeValue > 1 ? 's' : '';
 
-    return timeValue == 0 ? timeAgo : timeAgo + ' ago';
+    return timeAgo + ' ago';
   }
+
+// static String displayTimeAgoFromTimestamp(String? timestamp) {
+//   // DateTime messageDate = Timestamp.fromMillisecondsSinceEpoch(int.parse(timestamp!)).toDate();
+//
+//   final year = int.parse(timestamp!.substring(0, 4));
+//   final month = int.parse(timestamp.substring(5, 7));
+//   final day = int.parse(timestamp.substring(8, 10));
+//   final hour = int.parse(timestamp.substring(11, 13));
+//   final minute = int.parse(timestamp.substring(14, 16));
+//
+//   final DateTime messageDate = DateTime(year, month, day, hour, minute);
+//
+//   final int diffInHours = DateTime.now().difference(messageDate).inHours;
+//
+//   String? timeAgo = '';
+//   String? timeUnit = '';
+//   int timeValue = 0;
+//
+//   if (diffInHours < 1) {
+//     final diffInMinutes = DateTime.now().difference(messageDate).inMinutes;
+//     timeValue = diffInMinutes;
+//     timeUnit = 'minute';
+//   } else if (diffInHours < 24) {
+//     timeValue = diffInHours;
+//     timeUnit = 'hour';
+//   } else if (diffInHours >= 24 && diffInHours < 24 * 7) {
+//     timeValue = (diffInHours / 24).floor();
+//     timeUnit = 'day';
+//   } else if (diffInHours >= 24 * 7 && diffInHours < 24 * 30) {
+//     timeValue = (diffInHours / (24 * 7)).floor();
+//     timeUnit = 'week';
+//   } else if (diffInHours >= 24 * 30 && diffInHours < 24 * 12 * 30) {
+//     timeValue = (diffInHours / (24 * 30)).floor();
+//     timeUnit = 'month';
+//   } else {
+//     timeValue = (diffInHours / (24 * 365)).floor();
+//     timeUnit = 'year';
+//   }
+//
+//   timeAgo = timeValue == 0 ? 'now' : timeValue.toString() + ' ' + timeUnit;
+//   timeAgo += timeValue > 1 ? 's' : '';
+//
+//   return timeValue == 0 ? timeAgo : timeAgo + ' ago';
+// }
+
+
 }
