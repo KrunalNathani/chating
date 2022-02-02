@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:grouped_list/grouped_list.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -93,6 +94,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String? messageDate;
   DateTime? messageDatessss;
 
+
   getVerboseDateTimeRepresentation(DateTime dateTime) {
     print("dateTime ${dateTime}");
     DateTime now = DateTime.now();
@@ -104,14 +106,14 @@ class _ChatScreenState extends State<ChatScreen> {
       return messageDate = 'Today';
     }
 
-    String roughTimeString = DateFormat('jm').format(dateTime);
-    print("roughTimeString ${roughTimeString}");
-    if (localDateTime.day == now.day &&
-        localDateTime.month == now.month &&
-        localDateTime.year == now.year) {
-      print("messageDate @@ ${messageDate}");
-      return messageDate = roughTimeString;
-    }
+    // String roughTimeString = DateFormat('jm').format(dateTime);
+    // print("roughTimeString ${roughTimeString}");
+    // if (localDateTime.day == now.day &&
+    //     localDateTime.month == now.month &&
+    //     localDateTime.year == now.year) {
+    //   print("messageDate @@ ${messageDate}");
+    //   return  roughTimeString;
+    // }
 
     DateTime yesterday = now.subtract(Duration(days: 1));
     print("yesterday ${yesterday}");
@@ -129,8 +131,6 @@ class _ChatScreenState extends State<ChatScreen> {
       return messageDate = '$weekday';
     }
 
-    print(
-        "messageDate @@@@@ ${DateFormat('yMd').format(dateTime)},$roughTimeString");
     return messageDate = '${DateFormat('yMd').format(dateTime)}';
   }
 
@@ -179,7 +179,6 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
       body: StreamBuilder(
-
           /// chat room create and create chat massage user and receiver
           stream: FirebaseFirestore.instance
               .collection("chat")
@@ -189,6 +188,7 @@ class _ChatScreenState extends State<ChatScreen> {
               .snapshots(),
           builder:
               (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                List _messageList = [];
             if (!snapshot.hasData) {
               return Center(
                 child: CircularProgressIndicator(),
@@ -233,206 +233,113 @@ class _ChatScreenState extends State<ChatScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              //
-                              // Text('- - - - ${displayTimeAgoFromTimestamp(
-                              //     EpochToDateTime.toString())} - - - -'),
-                              ListView.separated(
+
+                              ListView.builder(
+
                                 itemCount: snapshot.data!.docs.length,
-                                separatorBuilder: (context, index) {
-                                  //
-                                  // print("messageDateSs${snapshot.data!.docs.length}");
-                                  // snapshot.data!.docs.map((document) {
-                                  //   print("messageDate111 ${document['dateTime']}");
-                                  //   messageDatessss =  DateTime.fromMillisecondsSinceEpoch(int.parse("${document['dateTime']}"));
-                                  //
-                                  //   });
-                                  // print('messageDatesss ${EpochToDateTime}');
-                                  // getVerboseDateTimeRepresentation(EpochToDateTime!);
-                                  // final int diffInHours = DateTime.now().difference(EpochToDateTime!).inHours;
 
-                                  // print("messageDate1212 ${diffInHours}");
-                                  // print("messageDate1212 ${diffInHours/24}");
-                                  // print("messageDate1212 ${diffInHours/168}");
-                                  // print("messageDate1212 ${diffInHours/2016}");
-                                  //
-                                  // if (diffInHours < 1) {
-                                  //   timeValue = diffInHours;
-                                  //   timeUnit = 'minute';
-                                  //
-                                  //   } else if (diffInHours < 24) {
-                                  //     timeValue = diffInHours;
-                                  //     timeUnit = 'hour';
-                                  // } else if (diffInHours >= 24 && diffInHours < 24 * 7) {
-                                  //   timeValue = (diffInHours / 24).floor();
-                                  //   timeUnit = 'day';
-                                  //
-                                  // } else if (diffInHours >= 24 * 7 && diffInHours < 24 * 30) {
-                                  //   timeValue = (diffInHours / (24 * 7)).floor();
-                                  //   timeUnit = 'week';
-                                  // } else if (diffInHours >= 24 * 30 && diffInHours < 24 * 12 * 30) {
-                                  //   timeValue = (diffInHours / (24 * 30)).floor();
-                                  //   timeUnit = 'month';
-                                  //
-                                  // } else {
-                                  //   timeValue = (diffInHours / (24 * 365)).floor();
-                                  //   timeUnit = 'year';
-                                  // }
-                                  // timeAgo=  timeValue.toString() + ' ' + timeUnit;
-                                  // timeAgo += timeValue > 1 ? 's' : '';
-                                  // return Column(
-                                  //   children:   snapshot.data!.docs.map((document) {
-                                  //
-                                  //     DateTime messageDate =  DateTime.fromMillisecondsSinceEpoch(int.parse("${document['dateTime']}"));
-                                  //
-                                  //         print("messageDate111 ${document['dateTime']}");
-                                  //
-                                  //         final int diffInHours = DateTime
-                                  //             .now()
-                                  //             .difference(messageDate)
-                                  //             .inDays;
-                                  //
-                                  //         print("messageDate222 ${diffInHours}");
-                                  //
-                                  //         String? timeAgo = '';
-                                  //         String? timeUnit = '';
-                                  //         int timeValue = 0;
-                                  //
-                                  //         if (diffInHours < 1) {
-                                  //           final diffInMinutes = DateTime
-                                  //               .now()
-                                  //               .difference(messageDate)
-                                  //               .inDays;
-                                  //           timeValue = diffInMinutes;
-                                  //           timeUnit = 'day';
-                                  //         // } else if (diffInHours < 24) {
-                                  //         //   timeValue = diffInHours;
-                                  //         //   timeUnit = 'hour';
-                                  //         } else if (diffInHours >= 24 && diffInHours < 24 * 7) {
-                                  //           timeValue = (diffInHours / 24).floor();
-                                  //           timeUnit = 'day';
-                                  //         } else if (diffInHours >= 24 * 7 && diffInHours < 24 * 30) {
-                                  //           timeValue = (diffInHours / (24 * 7)).floor();
-                                  //           timeUnit = 'week';
-                                  //         } else if (diffInHours >= 24 * 30 && diffInHours < 24 * 12 * 30) {
-                                  //           timeValue = (diffInHours / (24 * 30)).floor();
-                                  //           timeUnit = 'month';
-                                  //         } else {
-                                  //           timeValue = (diffInHours / (24 * 365)).floor();
-                                  //           timeUnit = 'year';
-                                  //         }
-                                  //
-                                  //         timeAgo = timeValue.toString() + ' ' + timeUnit;
-                                  //
-                                  //         timeAgo += timeValue > 1 ? 's' : '';
-                                  //
-                                  //     // return Divider();
-                                  //     return Text("$timeAgo",style: TextStyle(color: Colors.red,fontSize: 25),);
-                                  //   }).toList(),
-                                  // );
-
-                                  getVerboseDateTimeRepresentation(EpochToDateTime!);
-                                  return Center(child: Text("------${messageDate}------"));
-                                },
                                 itemBuilder: (context, index) {
                                   final element = snapshot.data!.docs[index];
                                   print("element ${element['dateTime']}");
-                                  return Column(
-                                    children:
-                                        snapshot.data!.docs.map((document) {
-                                      EpochToDateTime =
-                                          DateTime.fromMillisecondsSinceEpoch(
-                                              int.parse(
-                                                  "${document['dateTime']}"));
-                                      // print(DateFormat.jm().format(EpochToDateTime!));
-                                      // print('dateTime==>>>> ${EpochToDateTime}');
-                                      print("messageDAte ${EpochToDateTime}");
 
-                                      /// autoscroll is not Empty then this scroll is start
-                                      if (_scrollController
-                                          .positions.isNotEmpty) {
-                                        WidgetsBinding.instance
-                                            ?.addPostFrameCallback((_) => {
-                                                  _scrollController.jumpTo(
-                                                      _scrollController.position
-                                                          .maxScrollExtent)
-                                                });
-                                        // print("LiveTime => ${DateFormat.jm().format(DateTime.now())}");
-                                      }
+                                  EpochToDateTime =
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                          int.parse("${element['dateTime']}"));
 
-                                      if (widget.senderUID !=
-                                          document['senderUID']) {
-                                        print("check Condition and data add");
-                                        readMessage(document.id,
-                                            document['receiverUID']);
-                                        // print("isMassageRead not match date");
-                                        // print("isMassageRead not match date = ${isMassageRead}");
-                                      } else {
-                                        print("data not add");
-                                      }
+                                  /// autoscroll is not Empty then this scroll is start
+                                  if (_scrollController.positions.isNotEmpty) {
+                                    WidgetsBinding.instance
+                                        ?.addPostFrameCallback((_) => {
+                                              _scrollController.jumpTo(
+                                                  _scrollController
+                                                      .position.maxScrollExtent)
+                                            });
+                                    // print("LiveTime => ${DateFormat.jm().format(DateTime.now())}");
+                                  }
+                                  //
+                                  if (widget.senderUID !=
+                                      element['senderUID']) {
+                                    print("check Condition and data add");
+                                    readMessage(
+                                        element.id, element['receiverUID']);
 
-                                      // _controller = VideoPlayerController.network(
-                                      //     document['vidurl'])
-                                      //   ..initialize();
-                                      // print('uuurl:- ${document['vidurl']}');
+                                  } else {
+                                    print("data not add");
+                                  }
 
-                                      return ChatBubbleText(
-                                        text: document['massage'],
-                                        messageType: document['massageType'],
-                                        imageUrl: document['url'] ?? '',
-                                        onPressImagePopup: () {
-                                          _onPress(document['url']);
-                                        },
-                                        onTapDownImagePopup: _onTapDown,
-                                        onPressTextPopup: () {
-                                          _onPressTextPopup(
-                                              document['massage']);
-                                        },
+                                  String messagesDate = DateFormat('dd/MM/yyyy')
+                                      .format(
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                          int.parse(element['dateTime'])));
 
-                                        //   videoWidget:_controller != null && _controller!.value.isInitialized
-                                        //       ? AspectRatio(
-                                        //     aspectRatio: _controller!.value.aspectRatio,
-                                        //     child: InkWell(
-                                        //       onTap: () {
-                                        //         setState(() {
-                                        //           _controller!.value.isPlaying
-                                        //               ? _controller!.pause()
-                                        //               : _controller!.play();
-                                        //         });
-                                        //       },
-                                        //       child: VideoPlayer(_controller!),
-                                        //     ),
-                                        //   )
-                                        //       : SizedBox(height: 50,) ,
-                                        //
-                                        //   onPress: (){
-                                        //     print('object');
-                                        //     // downloadFileExample(document['url']);
-                                        //     // downloadFileExample(document['url']);
-                                        // },
-                                        // isCurrentUser: false,
-                                        // loader: loading
-                                        //     ? Center(
-                                        //         child: CircularProgressIndicator(
-                                        //         color: Colors.green,
-                                        //         value: progress,
-                                        //       ))
-                                        //     : Container(
-                                        //         height: 20,
-                                        //         color: Colors.red,
-                                        //       ),
-                                        isCurrentUser: widget.receiverUID ==
-                                            document['receiverUID'],
-                                        // dateTime:
-                                        //     '${DateFormat.jm().format(EpochToDateTime!)}',
-                                        dateTime:
-                                            '${displayTimeAgoFromTimestamp(EpochToDateTime.toString())}',
-                                        senderName: widget.receiverUID ==
-                                                document['receiverUID']
-                                            ? '${widget.senderName}'
-                                            : '${widget.receiverName}',
-                                      );
-                                    }).toList(),
-                                  );
+
+                                  print('lsit ${_messageList}');
+                                  print('messagesDate ${messagesDate}');
+                                  print('messageList.contains(messagesDate) ${_messageList.contains(messagesDate)}');
+
+                                  if(!_messageList.contains(messagesDate)){
+                                    _messageList.add(messagesDate);
+                                    // messageLists = messageList.toSet();
+                                    return Center(
+                                        child: Text("------ $messagesDate ------",style: TextStyle(fontSize: 16,color: Colors.black),));
+                                  }else{
+                                    return ChatBubbleText(
+                                      text: element['massage'],
+                                      messageType: element['massageType'],
+                                      imageUrl: element['url'] ?? '',
+                                      onPressImagePopup: () {
+                                        _onPress(element['url']);
+                                      },
+                                      onTapDownImagePopup: _onTapDown,
+                                      onPressTextPopup: () {
+                                        _onPressTextPopup(element['massage']);
+                                      },
+
+                                      //   videoWidget:_controller != null && _controller!.value.isInitialized
+                                      //       ? AspectRatio(
+                                      //     aspectRatio: _controller!.value.aspectRatio,
+                                      //     child: InkWell(
+                                      //       onTap: () {
+                                      //         setState(() {
+                                      //           _controller!.value.isPlaying
+                                      //               ? _controller!.pause()
+                                      //               : _controller!.play();
+                                      //         });
+                                      //       },
+                                      //       child: VideoPlayer(_controller!),
+                                      //     ),
+                                      //   )
+                                      //       : SizedBox(height: 50,) ,
+                                      //
+                                      //   onPress: (){
+                                      //     print('object');
+                                      //     // downloadFileExample(document['url']);
+                                      //     // downloadFileExample(document['url']);
+                                      // },
+                                      // isCurrentUser: false,
+                                      // loader: loading
+                                      //     ? Center(
+                                      //         child: CircularProgressIndicator(
+                                      //         color: Colors.green,
+                                      //         value: progress,
+                                      //       ))
+                                      //     : Container(
+                                      //         height: 20,
+                                      //         color: Colors.red,
+                                      //       ),
+                                      isCurrentUser: widget.receiverUID ==
+                                          element['receiverUID'],
+                                      // dateTime:
+                                      //     '${DateFormat.jm().format(EpochToDateTime!)}',
+                                      dateTime:
+                                      '${displayTimeAgoFromTimestamp(EpochToDateTime.toString())}',
+                                      senderName: widget.receiverUID ==
+                                          element['receiverUID']
+                                          ? '${widget.senderName}'
+                                          : '${widget.receiverName}',
+                                    );
+                                  }
+
                                 },
                                 shrinkWrap: true,
                                 physics: NeverScrollableScrollPhysics(),
