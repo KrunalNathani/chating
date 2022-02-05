@@ -446,7 +446,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   Expanded(
                     flex: 4,
-                    child: Container(
+                    child:imageFiles != null? Container(
+                      padding: EdgeInsets.all(5),
+                      height: 100,
+                      width: double.infinity,
+                      child: Image.file(imageFiles!),
+                    ): Container(
                         padding: EdgeInsets.symmetric(vertical: 2),
                         margin: EdgeInsets.symmetric(horizontal: 5),
                         child: TextField(
@@ -503,6 +508,17 @@ class _ChatScreenState extends State<ChatScreen> {
                           dateTimeToEpoch = date.millisecondsSinceEpoch;
                           print('dddddddd ==> $dateTimeToEpoch (milliseconds)');
 
+
+                          print("imageURL ${imgUrl1}");
+
+                          /// send notification receiver
+                          sendNotification(
+                              chatMassage.text,
+                              widget.senderName.toString(),
+                              widget.receiverFCMToken.toString(),
+                              imgUrl1.toString()
+                          );
+
                           /// chetDetailsModel through add data in firestore
                           ChatDetailsModel model = ChatDetailsModel(
                               senderName: widget.senderName,
@@ -517,6 +533,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               vidurl: vidUrl,
                               CombineID: widget.combineID,
                               readMessage: false);
+
 
                           /// this types is selected and after value is null so this types = '';
                           types = '';
@@ -535,11 +552,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               .add(model.toJson())
                               .catchError((e) => print(e));
 
-                          /// send notification receiver
-                          sendNotification(
-                              chatMassage.text,
-                              widget.senderName.toString(),
-                              widget.receiverFCMToken.toString());
+
                         }
                       },
                       icon: Icon(Icons.send),
@@ -548,14 +561,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   )
                 ],
               )),
-          imageFiles != null
-              ? Container(
-                  padding: EdgeInsets.all(5),
-                  height: 100,
-                  width: double.infinity,
-                  child: Image.file(imageFiles!),
-                )
-              : SizedBox()
         ],
       ),
     );
@@ -909,7 +914,7 @@ class _ChatScreenState extends State<ChatScreen> {
         .collection("chat")
         .doc(widget.combineID)
         .collection("Chats")
-        .where('receiverUID', isEqualTo: id1)
+        .where('senderUID', isEqualTo: id1)
         .snapshots()
         .listen((event) async {
       final DocumentReference documentReference = FirebaseFirestore.instance

@@ -248,7 +248,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
             .doc(_chatRoomID)
             .collection("Chats")
             .where('CombineID', isEqualTo: _chatRoomID)
-            .where('receiverUID', isEqualTo: ID)
+            .where('senderUID', isEqualTo: ID)
             .where('readMessage', isEqualTo: false)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -267,10 +267,11 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
               width: 20,
               decoration:
                   BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-              child: ListView.builder(
-                itemCount: zz.length,
-                itemBuilder: (context, index) => Center(child: Text(zz[index].toString(),style:TextStyle(fontSize: 15),)),
-              ),
+              // child: ListView.builder(
+              //   itemCount: zz.length,
+              //   itemBuilder: (context, index) => Center(child: Text(zz[index].toString(),style:TextStyle(fontSize: 15),)),
+              // ),
+              child: Text("${snapshot.data!.docs.length}"),
             ),
           );
         });
