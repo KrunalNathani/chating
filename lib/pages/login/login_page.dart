@@ -176,7 +176,7 @@ class _LoginPageState extends State<LoginPage> {
                             await userService.loginUpdateToken(userID);
 
                             await LoginUIDData(userCredential.user!.uid);
-
+                            displaySnackBar(context, "Login Successfully!");
                             Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
