@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:chating/CommonFile/Permission%20Requast.dart';
-import 'package:chating/CommonFile/chat_massage_design.dart';
 import 'package:chating/Notification/notification_api.dart';
-import 'package:chating/model/chatScreenModel.dart';
+import 'package:chating/widget/chat_massage_design.dart';
+import 'package:chating/constants/constants.dart';
+import 'package:chating/model/chat_screen_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:grouped_list/grouped_list.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -22,9 +21,9 @@ import 'package:video_player/video_player.dart';
 String? massageType;
 DateTime? EpochToDateTime;
 
-class ChatScreen extends StatefulWidget {
+class ChatPage extends StatefulWidget {
   /// next Screen data pass
-  ChatScreen({
+  ChatPage({
     Key? key,
     required this.senderName,
     required this.receiverToken,
@@ -45,10 +44,10 @@ class ChatScreen extends StatefulWidget {
   String? receiverFCMToken;
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  _ChatPageState createState() => _ChatPageState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatPageState extends State<ChatPage> {
   TextEditingController chatMassage = TextEditingController();
 
   /// massage type
@@ -378,16 +377,22 @@ class _ChatScreenState extends State<ChatScreen> {
                                       children: [
                                         TextButton(
                                           onPressed: () async {
-                                            await getFromGallery();
+                                            setState(() {
+
+                                            });
+                                            // setState(() async {
+                                             imageFiles = await getFromGallery();
+                                            // });
+
                                             if (imageFiles != null) {
                                               Navigator.pop(context);
                                             }
 
-                                            if (videoFiles != null) {
-                                              Navigator.pop(context);
-                                              chatMassage.text =
-                                                  videoFiles.toString();
-                                            }
+                                            // if (videoFiles != null) {
+                                            //   Navigator.pop(context);
+                                            //   chatMassage.text =
+                                            //       videoFiles.toString();
+                                            // }
 
                                             print("imageFile==> $videoFiles");
                                           },
@@ -801,18 +806,6 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  /// image pickup in gallery
-  getFromGallery() async {
-    XFile? pickedFile = await ImagePicker().pickImage(
-        source: ImageSource.gallery, maxHeight: 1800, maxWidth: 1800);
-
-    if (pickedFile != null) {
-      setState(() {
-        imageFiles = File(pickedFile.path);
-        print('gallery imageFiles ==> ${imageFiles}');
-      });
-    }
-  }
 
   /// image upload cloud store and get image url
   Future<void> upload_DownloadURL_File() async {

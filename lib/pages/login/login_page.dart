@@ -1,6 +1,11 @@
-import 'package:chating/CommonFile/commonFile.dart';
-import 'package:chating/Screens/ChatHomeScreen.dart';
-import 'package:chating/model/usermodel.dart';
+
+import 'package:chating/constants/constants.dart';
+import 'package:chating/local_data/shared_preference.dart';
+import 'package:chating/services/auth_service.dart';
+import 'package:chating/services/user_service.dart';
+import 'package:chating/widget/common_text_field.dart';
+import 'package:chating/model/user_model.dart';
+import 'package:chating/pages/chat/chat_user_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -13,15 +18,19 @@ String email = "";
 String yourPassword = "";
 String newGenerateToken = "";
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key, this.userModel}) : super(key: key);
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key, this.userModel}) : super(key: key);
   final UserDetailsModel? userModel;
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginPageState extends State<LoginPage> {
+
+  AuthService authService = AuthService();
+  UserService userService = UserService();
+
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
@@ -73,10 +82,11 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     FocusManager.instance.primaryFocus?.unfocus();
-    // TODO: implement initState
-    FirebaseAuth.instance.currentUser != null ?  ChatHomeScreen(UID: userID,): LoginScreen();
+
     super.initState();
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -149,12 +159,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           FocusScope.of(context).requestFocus(FocusNode());
 
                           try {
-                            UserCredential userCredential = await FirebaseAuth
-                                .instance
-                                .signInWithEmailAndPassword(
-                                    email: emailController.text,
-                                    password: passwordController.text);
+
                             setState(() {});
+
+                            UserCredential userCredential =await authService.checkAuthUser(emailController.text, passwordController.text);
 
                             userID = userCredential.user!.uid;
                             // CollectionReference users = FirebaseFirestore.instance.collection('userDetail');
@@ -164,33 +172,26 @@ class _LoginScreenState extends State<LoginScreen> {
                             //   print("token $fcmToken");
                             // });
                             print("uid is:- ${userID}");
-                            await FirebaseMessaging.instance
-                                .getToken()
-                                .then((value) => newGenerateToken = value!);
-                            print("newGenerateToken:- ${newGenerateToken}");
-                            await FirebaseFirestore.instance
-                                .collection('userDetail')
-                                .doc(userID)
-                                .update({'fcmToken': newGenerateToken})
-                                .then((value) => print("User Updated"))
-                                .catchError((error) =>
-                                    print("Failed to update user: $error"));
+
+                            await userService.loginUpdateToken(userID);
+
+                            await LoginUIDData(userCredential.user!.uid);
 
                             Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => ChatHomeScreen(
+                                    builder: (context) => ChatUserPage(
                                           UID: userID,
                                         )
                                 ),
                                 (route) => false);
 
-
                           } on FirebaseAuthException catch (e) {
                             if (e.code == 'user-not-found') {
-                              print('No user found for that email.');
+                              displaySnackBar(context, "No user found for that email.");
                             } else if (e.code == 'wrong-password') {
                               print('Wrong password provided for that user.');
+                              displaySnackBar(context, "Wrong password provided for that user.");
                             }
                           }
                         }),
@@ -203,4 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+
+
 }

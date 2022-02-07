@@ -1,22 +1,23 @@
-import 'package:chating/AuthScreen/LoginScreen.dart';
-import 'package:chating/Screens/ChatScreen.dart';
-import 'package:chating/model/chatScreenModel.dart';
+
+import 'package:chating/pages/login/login_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ChatHomeScreen extends StatefulWidget {
-  ChatHomeScreen({this.UID});
+import 'chat_page.dart';
+
+class ChatUserPage extends StatefulWidget {
+  ChatUserPage({this.UID});
 
   String? UID;
 
   @override
-  _ChatHomeScreenState createState() => _ChatHomeScreenState();
+  _ChatUserPageState createState() => _ChatUserPageState();
 }
 
-class _ChatHomeScreenState extends State<ChatHomeScreen> {
+class _ChatUserPageState extends State<ChatUserPage> {
   String? senderName;
   String? receiverName;
   String? receiverToken;
@@ -37,10 +38,14 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
           TextButton(
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
+                final prefs = await SharedPreferences.getInstance();
+                final success = await prefs.remove('LoginUID');
+                print("Success ${success}");
+
                 Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => LoginScreen(),
+                      builder: (context) => LoginPage(),
                     ));
               },
               child: Text(
@@ -49,7 +54,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
               ))
         ],
       ),
-      body: Stack(children: [
+      body: widget.UID!.isEmpty? CircularProgressIndicator(): Stack(children: [
         Container(
           height: MediaQuery.of(context).size.height * 10,
           decoration: BoxDecoration(
@@ -153,7 +158,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                               print('filterChatRoomID ${filterChatRoomID}');
 
                               Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => ChatScreen(
+                                builder: (context) => ChatPage(
                                   senderName: senderName,
                                   receiverName: receiverName,
                                   receiverToken: receiverToken,
@@ -166,7 +171,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                             },
                           ),
 
-                          chatRoom(receiverUID != null ? document.id : ''),
+
+                          receiverUID != null ? CircularProgressIndicator() : chatRoom(receiverUID != null ? document.id : ''),
 
                           // StreamBuilder(
                           //
@@ -232,9 +238,6 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   }
 
   Widget chatRoom(String ID) {
-    print('IDs +> ${ID}');
-    List zz = [];
-
 
     String _chatRoomID = senderUID.hashCode <= ID.hashCode
         ? '${senderUID} ${ID}'
@@ -253,27 +256,23 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasData) {
-            print("dddaaaattaaa ${snapshot.data!.docs.length}");
-            zz.add(snapshot.data!.docs.length);
-            print("qqqqq ==> ${zz}");
+            return Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                alignment: Alignment.center,
+                height: 20,
+                width: 20,
+                decoration:
+                BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                child: Text("${snapshot.data!.docs.length}"),
+              ),
+            );
+          }else{
+            return CircularProgressIndicator();
           }
 
-          return Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              alignment: Alignment.center,
-              height: 20,
-              width: 20,
-              decoration:
-                  BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-              // child: ListView.builder(
-              //   itemCount: zz.length,
-              //   itemBuilder: (context, index) => Center(child: Text(zz[index].toString(),style:TextStyle(fontSize: 15),)),
-              // ),
-              child: Text("${snapshot.data!.docs.length}"),
-            ),
-          );
+
         });
   }
 }

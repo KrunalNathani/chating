@@ -1,7 +1,10 @@
-import 'package:chating/AuthScreen/LoginScreen.dart';
-import 'package:chating/CommonFile/commonFile.dart';
-import 'package:chating/model/usermodel.dart';
-import 'package:chating/validation/validation_screen.dart';
+import 'package:chating/constants/constants.dart';
+import 'package:chating/services/auth_service.dart';
+import 'package:chating/services/user_service.dart';
+import 'package:chating/widget/common_text_field.dart';
+import 'package:chating/model/user_model.dart';
+import 'package:chating/pages/login/login_page.dart';
+import 'package:chating/utils/validator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -9,12 +12,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class RegistrationScreen extends StatefulWidget {
+class RegistrationPage extends StatefulWidget {
   @override
-  _RegistrationScreenState createState() => _RegistrationScreenState();
+  _RegistrationPageState createState() => _RegistrationPageState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
+class _RegistrationPageState extends State<RegistrationPage> {
+  AuthService authService = AuthService();
+  UserService userService = UserService();
+
   final GlobalKey<FormState> _key = GlobalKey<FormState>();
   TextEditingController fNameController = TextEditingController();
   TextEditingController lNameController = TextEditingController();
@@ -50,37 +56,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 15, vertical: 6),
                       child: CommonTextField(
-                          controller: fNameController,
-                          textInputType: TextInputType.name,
-                          hint: "Enter Your First Name",
-                          validatorOnTap: (String? value) {
-                            RegExp regex = RegExp(r'^[a-zA-Z]+$');
-                            if (value == null || value.isEmpty) {
-                              return 'Enter User Name';
-                            } else if (!regex.hasMatch(value)) {
-                              return 'Only Alphabet Allow';
-                            } else {
-                              return null;
-                            }
-                          }),
+                        controller: fNameController,
+                        textInputType: TextInputType.name,
+                        hint: "Enter Your First Name",
+                        validatorOnTap: (value) => nameValidation(value),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 15, vertical: 6),
                       child: CommonTextField(
-                          controller: lNameController,
-                          textInputType: TextInputType.name,
-                          hint: "Enter Your Last Name",
-                          validatorOnTap: (String? value) {
-                            RegExp regex = RegExp(r'^[a-zA-Z]+$');
-                            if (value == null || value.isEmpty) {
-                              return 'Enter User Name';
-                            } else if (!regex.hasMatch(value)) {
-                              return 'Only Alphabet Allow';
-                            } else {
-                              return null;
-                            }
-                          }),
+                        controller: lNameController,
+                        textInputType: TextInputType.name,
+                        hint: "Enter Your Last Name",
+                        validatorOnTap: (value) => nameValidation(value),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -147,58 +137,42 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           if (_key.currentState!.validate()) {
                             /// Authentication Email and Password
                             try {
-                              UserCredential userCredential = await FirebaseAuth
-                                  .instance
-                                  .createUserWithEmailAndPassword(
-                                      email: emailController.text,
-                                      password: passwordController.text);
+                              UserCredential userCredential =
+                                  await authService.authCreateUSer(
+                                      emailController.text,
+                                      passwordController.text);
                               print(
                                   'userCredential==>${userCredential.user!.uid}');
                               uID = userCredential.user!.uid;
                             } on FirebaseAuthException catch (e) {
                               if (e.code == 'weak-password') {
                                 print('The password provided is too weak.');
+                                displaySnackBar(context, "The password provided is too weak.");
                               } else if (e.code == 'email-already-in-use') {
-                                print(
-                                    'The account already exists for that email.');
+                                displaySnackBar(context, "The account already exists for that email.");
                               }
                             } catch (e) {
                               print(e);
                             }
 
                             /// Create FCM TOKEN
-
-                         await FirebaseMessaging.instance.getToken().then((token){
-                            fcmToken = token!;
-                              print("token $fcmToken");
-                            });
+                            fcmToken = await userService.getToken();
+                            print("fcmToken ${fcmToken}");
 
                             /// Register in CloudFire Store user all data
-                            final FirebaseFirestore fireStore =
-                                FirebaseFirestore.instance;
-
-                            final CollectionReference _mainCollection =
-                                fireStore.collection('userDetail');
-
-                            UserDetailsModel model = UserDetailsModel(
-                                fName: fNameController.text,
-                                lName: lNameController.text,
-                                email: emailController.text,
-                                password: passwordController.text,
-                                uid: uID,
-                            fcmToken: fcmToken
-                            );
-
-                            await _mainCollection
-                                .doc(uID)
-                                .set(model.toJson())
-                                .catchError((e) => print(e));
-
+                           await userService.registerUserDetail(
+                                fNameController.text,
+                                lNameController.text,
+                                emailController.text,
+                                passwordController.text,
+                                uID,
+                                fcmToken);
+                           displaySnackBar(context, "Registration Successfully!");
                             setState(() {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => LoginScreen()));
+                                      builder: (context) => LoginPage()));
                             });
                           }
                         }),

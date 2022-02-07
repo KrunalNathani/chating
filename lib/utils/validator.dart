@@ -1,5 +1,16 @@
 import 'package:flutter/material.dart';
 
+String? nameValidation(String? value) {
+  RegExp regex = RegExp(r'^[a-zA-Z]+$');
+  if (value == null || value.isEmpty) {
+    return 'Enter User Name';
+  } else if (!regex.hasMatch(value)) {
+    return 'Only Alphabet Allow';
+  } else {
+    return null;
+  }
+}
+
 String? emailValidation(String? value) {
   String pattern =
       r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+";
@@ -12,22 +23,6 @@ String? emailValidation(String? value) {
   }
   else {
     return null;
-  }
-}
-
-String? validatePrefDate(String value, BuildContext context,String dateOfBirth ,bool? isAdult ) {
-  // ignore: avoid_print
-  print("isAdult -->>> $isAdult");
-  if (dateOfBirth.isEmpty) {
-    return "Enter DoB";
-  }
-  else {
-    if(isAdult == false){
-    return "Age Must Be 18";
-  }
-  else {
-    return null;
-  }
   }
 }
 

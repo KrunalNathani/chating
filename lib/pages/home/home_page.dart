@@ -1,15 +1,24 @@
-import 'package:chating/AuthScreen/LoginScreen.dart';
-import 'package:chating/AuthScreen/RegisterScreen.dart';
+import 'package:chating/pages/login/login_page.dart';
+import 'package:chating/pages/registration/register_page.dart';
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomePageState extends State<HomePage> {
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => LoginScreen(),
+                  builder: (context) => LoginPage(),
                 ));
               },
               child: Text(
@@ -32,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => RegistrationScreen(),
+                  builder: (context) => RegistrationPage(),
                 ));
               },
               child: Text(
