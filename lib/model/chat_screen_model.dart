@@ -1,5 +1,5 @@
-class ChatDetailsModel {
-  ChatDetailsModel({
+class ChatDetailItem {
+  ChatDetailItem({
     this.senderName,
     this.receiverName,
     this.token,
@@ -27,7 +27,7 @@ class ChatDetailsModel {
   bool? readMessage;
   String? CombineID;
 
-  factory ChatDetailsModel.fromJson(Map<String, dynamic> json) => ChatDetailsModel(
+  factory ChatDetailItem.fromJson(Map<String, dynamic> json) => ChatDetailItem(
     senderName: json["senderName"],
     receiverName: json["receiverName"],
     token: json["token"],

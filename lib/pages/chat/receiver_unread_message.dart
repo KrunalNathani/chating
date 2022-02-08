@@ -12,12 +12,12 @@ Widget receiverUnreadMessage(String ID) {
 
     /// chat room create and create chat massage user and receiver
       stream: FirebaseFirestore.instance
-          .collection("chat")
+          .collection("${chat}")
           .doc(_chatRoomID)
-          .collection("Chats")
-          .where('CombineID', isEqualTo: _chatRoomID)
-          .where('senderUID', isEqualTo: ID)
-          .where('readMessage', isEqualTo: false)
+          .collection("${Chats}")
+          .where('${CombineID}', isEqualTo: _chatRoomID)
+          .where('${senderUID}', isEqualTo: ID)
+          .where('${readMessage}', isEqualTo: false)
           .snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {

@@ -58,83 +58,96 @@ class _ChatUserPageState extends State<ChatUserPage> {
               ))
         ],
       ),
-      body: widget.UID!.isEmpty
-          ? CircularProgressIndicator()
-          : Stack(children: [
-              Container(
-                height: MediaQuery.of(context).size.height * 10,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    image: DecorationImage(
-                        image: NetworkImage('${bgImageURL}'),
-                        fit: BoxFit.contain)),
-              ),
-              StreamBuilder(
-                  stream: userService.showMessageAllData(widget.UID),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<QuerySnapshot> snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    return ListView(
-                      children: snapshot.data!.docs.map((document) {
-                        return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Stack(
-                              children: [
-                                ListTile(
-                                  tileColor: Colors.green,
-                                  title: Text(
-                                      "${document['${fName}']} ${document['${lName}']}"),
-                                  onTap: () async {
-                                    print("widget.UID ${widget.UID}");
+      body:
+          // widget.UID!.isEmpty
+          //     ? CircularProgressIndicator()
+          //     :
+          Stack(children: [
+        Container(
+          height: MediaQuery.of(context).size.height * 10,
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              image: DecorationImage(
+                  image: NetworkImage('${bgImageURL}'), fit: BoxFit.contain)),
+        ),
+        StreamBuilder(
+            stream: userService.showMessageAllData(widget.UID),
+            builder:
+                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              print("widget.UID11 ${widget.UID}");
+              print("widget.UID11 ${snapshot.data}");
+              if (!snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              return ListView(
+                children: snapshot.data!.docs.map((document) {
+                  return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Stack(
+                        children: [
+                          ListTile(
+                            tileColor: Colors.green,
+                            title: Text(
+                                "${document['${fName}']} ${document['${lName}']}"),
+                            onTap: () async {
+                              print("widget.UID ${widget.UID}");
 
-                                    await userService.senderDetailsCollect(
-                                        widget.UID, senderName, senderUID);
+                              /// sender Data
+                            Map<String, dynamic> senderData = await userService.receiverDetailsCollect(widget.UID);
 
-                                    await userService.receiverDetailsCollect(
-                                        document.id,
-                                        receiverName,
-                                        receiverFCMToken,
-                                        receiverToken,
-                                        receiverUID);
+                              /// find sender Name
+                              senderName = "${senderData['fName']} ${senderData['lName']} ";
 
-                                    chatRoomID = senderUID.hashCode <=
-                                            receiverUID.hashCode
-                                        ? '${senderUID} ${receiverUID}'
-                                        : '${receiverUID} ${senderUID}';
+                              /// Sender UID
+                              senderUID = widget.UID;
 
-                                    userChatRoomID.add(chatRoomID);
-                                    filterChatRoomID = userChatRoomID.toSet();
-                                    print(
-                                        'filterChatRoomID ${filterChatRoomID}');
+                              /// receiver Data
+                              Map<String, dynamic> receiverData =
+                                  await userService.receiverDetailsCollect(
+                                document.id,
+                              );
 
-                                    Navigator.of(context)
-                                        .push(MaterialPageRoute(
-                                      builder: (context) => ChatPage(
-                                        senderName: senderName,
-                                        receiverName: receiverName,
-                                        receiverToken: receiverToken,
-                                        combineID: chatRoomID,
-                                        senderUID: senderUID,
-                                        receiverUID: receiverUID,
-                                        receiverFCMToken: receiverFCMToken,
-                                      ),
-                                    ));
-                                  },
+                              receiverName = "${receiverData['fName']} ${receiverData['lName']}";
+                              receiverFCMToken = receiverData['fcmToken'];
+                              receiverToken = receiverData['fcmToken'];
+                              receiverUID = document.id;
+
+                              chatRoomID =
+                                  senderUID.hashCode <= receiverUID.hashCode
+                                      ? '${senderUID} ${receiverUID}'
+                                      : '${receiverUID} ${senderUID}';
+                              print("chatRoomID ${chatRoomID}");
+
+                              userChatRoomID.add(chatRoomID);
+                              filterChatRoomID = userChatRoomID.toSet();
+                              print('filterChatRoomID ${filterChatRoomID}');
+
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => ChatPage(
+                                  senderName: senderName,
+                                  receiverName: receiverName,
+                                  receiverToken: receiverToken,
+                                  combineID: chatRoomID,
+                                  senderUID: senderUID,
+                                  receiverUID: receiverUID,
+                                  receiverFCMToken: receiverFCMToken,
                                 ),
-                                receiverUID != null
-                                    ? CircularProgressIndicator()
-                                    : receiverUnreadMessage(
-                                        receiverUID != null ? document.id : ''),
-                              ],
-                            ));
-                      }).toList(),
-                    );
-                  }),
-            ]),
+                              ));
+                            },
+                          ),
+                          // receiverUID != null
+                          //     ? CircularProgressIndicator()
+                          //     :
+                          receiverUnreadMessage(
+                                  receiverUID != null ? document.id : ''),
+                        ],
+                      ));
+                }).toList(),
+              );
+            }),
+      ]),
     );
   }
 }

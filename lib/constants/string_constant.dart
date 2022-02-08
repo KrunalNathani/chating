@@ -56,6 +56,7 @@ const readMessage = "readMessage";
 const uid = "uid";
 const fName = "fName";
 const lName = "lName";
+const CombineID = "CombineID";
 
 /// snackbar
 const messageDeleteSuccessfully = "message delete successfully!";

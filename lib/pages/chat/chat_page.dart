@@ -103,44 +103,44 @@ class _ChatPageState extends State<ChatPage> {
   String? messageDate;
   DateTime? messageDatessss;
 
-  getVerboseDateTimeRepresentation(DateTime dateTime) {
-    print("dateTime ${dateTime}");
-    DateTime now = DateTime.now();
-    DateTime justNow = now.subtract(Duration(minutes: 1));
-    DateTime localDateTime = dateTime.toLocal();
-    print("localDateTime ${localDateTime}");
-    if (!localDateTime.difference(justNow).isNegative) {
-      print("messageDate @ ${messageDate}");
-      return messageDate = 'Today';
-    }
-
-    // String roughTimeString = DateFormat('jm').format(dateTime);
-    // print("roughTimeString ${roughTimeString}");
-    // if (localDateTime.day == now.day &&
-    //     localDateTime.month == now.month &&
-    //     localDateTime.year == now.year) {
-    //   print("messageDate @@ ${messageDate}");
-    //   return  roughTimeString;
-    // }
-
-    DateTime yesterday = now.subtract(Duration(days: 1));
-    print("yesterday ${yesterday}");
-    if (localDateTime.day == yesterday.day &&
-        localDateTime.month == yesterday.month &&
-        localDateTime.year == yesterday.year) {
-      print("messageDate @@@ ${messageDate}");
-      return messageDate = 'Yesterday, ';
-    }
-
-    if (now.difference(localDateTime).inDays < 4) {
-      String weekday = DateFormat('EEEE').format(localDateTime);
-
-      print("messageDate @@@@ ${messageDate}");
-      return messageDate = '$weekday';
-    }
-
-    return messageDate = '${DateFormat('yMd').format(dateTime)}';
-  }
+  // getVerboseDateTimeRepresentation(DateTime dateTime) {
+  //   print("dateTime ${dateTime}");
+  //   DateTime now = DateTime.now();
+  //   DateTime justNow = now.subtract(Duration(minutes: 1));
+  //   DateTime localDateTime = dateTime.toLocal();
+  //   print("localDateTime ${localDateTime}");
+  //   if (!localDateTime.difference(justNow).isNegative) {
+  //     print("messageDate @ ${messageDate}");
+  //     return messageDate = 'Today';
+  //   }
+  //
+  //   // String roughTimeString = DateFormat('jm').format(dateTime);
+  //   // print("roughTimeString ${roughTimeString}");
+  //   // if (localDateTime.day == now.day &&
+  //   //     localDateTime.month == now.month &&
+  //   //     localDateTime.year == now.year) {
+  //   //   print("messageDate @@ ${messageDate}");
+  //   //   return  roughTimeString;
+  //   // }
+  //
+  //   DateTime yesterday = now.subtract(Duration(days: 1));
+  //   print("yesterday ${yesterday}");
+  //   if (localDateTime.day == yesterday.day &&
+  //       localDateTime.month == yesterday.month &&
+  //       localDateTime.year == yesterday.year) {
+  //     print("messageDate @@@ ${messageDate}");
+  //     return messageDate = 'Yesterday, ';
+  //   }
+  //
+  //   if (now.difference(localDateTime).inDays < 4) {
+  //     String weekday = DateFormat('EEEE').format(localDateTime);
+  //
+  //     print("messageDate @@@@ ${messageDate}");
+  //     return messageDate = '$weekday';
+  //   }
+  //
+  //   return messageDate = '${DateFormat('yMd').format(dateTime)}';
+  // }
 
   @override
   void initState() {
@@ -176,7 +176,7 @@ class _ChatPageState extends State<ChatPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.receiverName!),
+        // title: Text(widget.receiverName!),
         actions: [
           GestureDetector(
               onTap: () {
@@ -528,7 +528,7 @@ class _ChatPageState extends State<ChatPage> {
                               imgUrl1.toString());
 
                           /// chetDetailsModel through add data in firestore
-                          ChatDetailsModel model = ChatDetailsModel(
+                          ChatDetailItem model = ChatDetailItem(
                               senderName: widget.senderName,
                               receiverName: widget.receiverName,
                               token: widget.receiverToken,
@@ -542,6 +542,9 @@ class _ChatPageState extends State<ChatPage> {
                               CombineID: widget.combineID,
                               readMessage: false);
 
+
+
+                          userService.createChatRoom(model, widget.combineID);
                           /// this types is selected and after value is null so this types = '';
                           types = '';
                           imgUrl1 = '';
@@ -550,7 +553,7 @@ class _ChatPageState extends State<ChatPage> {
                           /// Chat Massage TextField Clear
                           chatMassage.clear();
 
-                          userService.createChatRoom(model, widget.combineID);
+
                         }
                       },
                       icon: Icon(Icons.send),

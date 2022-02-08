@@ -23,7 +23,7 @@ class UserService{
     final CollectionReference _mainCollection =
     fireStore.collection('${userDetail}');
 
-    UserDetailsModel model = UserDetailsModel(
+    UserDetailItem model = UserDetailItem(
         fName: fName,
         lName: lName,
         email: email,
@@ -58,52 +58,28 @@ class UserService{
   }
 
   /// chat_user_page in senderDetailsCollect and use this data in model
-  senderDetailsCollect(senderUid, String? senderName, String? senderUID) async {
-    await FirebaseFirestore.instance
+  senderDetailsCollect(senderUid)  {
+  return   FirebaseFirestore.instance
         .collection('${userDetail}')
         .doc(senderUid)
-        .get()
-        .then((value) {
-
-      /// find sender Name
-      senderName =
-      '${value['${fName}']} ${value['${lName}']}';
-      print('senderName ${senderName}');
-
-      /// Sender UID
-      senderUID = senderUid;
-    });
+        .get();
   }
 
   /// chat_user_page in receiverDetailsCollect and use this data in model
-  receiverDetailsCollect(receiverID, String? receiverName, String? receiverFCMToken, String? receiverToken,String? receiverUID)async{
-    /// Find Receiver NAme
-    await FirebaseFirestore.instance
+    receiverDetailsCollect(
+      receiverID)async{
+    /// Find Receiver Name
+      DocumentSnapshot<Map<String, dynamic>> recieiverSnapshot = await FirebaseFirestore.instance
         .collection('${userDetail}')
         .doc(receiverID)
-        .get()
-        .then((value) {
-
-      /// Find Receiver NAme
-      receiverName =
-      '${value['${fName}']} ${value['${lName}']}';
-
-      /// Find Receiver FCMToken
-      receiverFCMToken =
-      '${value['${fcmToken}']}';
-
-      /// Receiver Token Id
-      receiverToken = '${value['${fcmToken}']}';
-
-      /// Receiver UID
-      receiverUID = receiverUID;
-    });
-
+        .get();
+      print(recieiverSnapshot.data());
+return recieiverSnapshot.data();
   }
 
   /// chat_user_page in display all data in StreamBuilder
   showMessageAllData(senderUID){
-    FirebaseFirestore.instance
+   return FirebaseFirestore.instance
         .collection('${userDetail}')
         .where('${uid}', isNotEqualTo: senderUID)
         .snapshots();
@@ -118,11 +94,10 @@ class UserService{
 
 
   /// create chat and chats entry in fire store
-  createChatRoom(ChatDetailsModel? model, String? combineID)async{
+  createChatRoom(ChatDetailItem? model, String? combineID)async{
 
     final FirebaseFirestore fireStore =
         FirebaseFirestore.instance;
-    // print('chatMAssages ;- ${chatMassage.text}');
 
     /// create two uer combine IDs and add pass model
     final CollectionReference _mainCollection =

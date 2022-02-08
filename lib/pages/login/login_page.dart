@@ -21,7 +21,7 @@ String newGenerateToken = "";
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key, this.userModel}) : super(key: key);
-  final UserDetailsModel? userModel;
+  final UserDetailItem? userModel;
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -166,17 +166,10 @@ class _LoginPageState extends State<LoginPage> {
                             UserCredential userCredential =await authService.checkAuthUser(emailController.text, passwordController.text);
 
                             userID = userCredential.user!.uid;
-                            // CollectionReference users = FirebaseFirestore.instance.collection('userDetail');
-
-                            // FirebaseMessaging.instance.getToken().then((token){
-                            //   fcmToken = token!;
-                            //   print("token $fcmToken");
-                            // });
-                            print("uid is:- ${userID}");
-
+                            print("userID ${userID}");
                             await userService.loginUpdateToken(userID);
 
-                            await LoginUIDData(userCredential.user!.uid);
+                            await loginUIDData(userCredential.user!.uid);
                             displaySnackBar(context, "${successLogin}");
                             Navigator.pushAndRemoveUntil(
                                 context,

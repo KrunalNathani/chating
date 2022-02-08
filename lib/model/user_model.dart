@@ -1,5 +1,5 @@
-class UserDetailsModel {
-  UserDetailsModel({
+class UserDetailItem {
+  UserDetailItem({
     this.fName,
     this.lName,
     this.email,
@@ -15,7 +15,7 @@ class UserDetailsModel {
   String? uid;
   String? fcmToken;
 
-  factory UserDetailsModel.fromJson(Map<String, dynamic> json) => UserDetailsModel(
+  factory UserDetailItem.fromJson(Map<String, dynamic> json) => UserDetailItem(
     fName: json["fName"],
     lName: json["lName"],
     email: json["email"],
