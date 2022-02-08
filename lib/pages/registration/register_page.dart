@@ -1,4 +1,5 @@
-import 'package:chating/constants/constants.dart';
+import 'package:chating/constants/function_constants.dart';
+import 'package:chating/constants/string_constant.dart';
 import 'package:chating/services/auth_service.dart';
 import 'package:chating/services/user_service.dart';
 import 'package:chating/widget/common_text_field.dart';
@@ -58,7 +59,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       child: CommonTextField(
                         controller: fNameController,
                         textInputType: TextInputType.name,
-                        hint: "Enter Your First Name",
+                        hint: "${enterFirstName}",
                         validatorOnTap: (value) => nameValidation(value),
                       ),
                     ),
@@ -68,7 +69,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       child: CommonTextField(
                         controller: lNameController,
                         textInputType: TextInputType.name,
-                        hint: "Enter Your Last Name",
+                        hint: "${enterLastName}",
                         validatorOnTap: (value) => nameValidation(value),
                       ),
                     ),
@@ -78,7 +79,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       child: CommonTextField(
                         controller: emailController,
                         textInputType: TextInputType.emailAddress,
-                        hint: "Enter Your Email",
+                        hint: "${enterEmail}",
                         validatorOnTap: (value) => emailValidation(value),
                       ),
                     ),
@@ -87,7 +88,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           horizontal: 15, vertical: 6),
                       child: CommonTextField(
                         controller: passwordController,
-                        hint: "Enter Password",
+                        hint: "${enterPassword}",
                         obscureText: !password ? false : true,
                         validatorOnTap: (value) =>
                             passwordValidation(value, passwordController.text),
@@ -109,7 +110,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           horizontal: 15, vertical: 6),
                       child: CommonTextField(
                         controller: confirmPasswordController,
-                        hint: "Enter Confirm Password",
+                        hint: "${enterConfirmPassword}",
                         obscureText: !confirmPassword ? false : true,
                         suffixIcon: InkWell(
                             onTap: () {
@@ -132,7 +133,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       height: 15,
                     ),
                     Button(
-                        buttonText: "Register",
+                        buttonText: "${Register}",
                         pressedButton: () async {
                           if (_key.currentState!.validate()) {
                             /// Authentication Email and Password
@@ -145,11 +146,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                   'userCredential==>${userCredential.user!.uid}');
                               uID = userCredential.user!.uid;
                             } on FirebaseAuthException catch (e) {
-                              if (e.code == 'weak-password') {
+                              if (e.code == '${weakPassword}') {
                                 print('The password provided is too weak.');
-                                displaySnackBar(context, "The password provided is too weak.");
-                              } else if (e.code == 'email-already-in-use') {
-                                displaySnackBar(context, "The account already exists for that email.");
+                                displaySnackBar(
+                                    context, "${ThePasswordProvidedIsTooWeak}");
+                              } else if (e.code == '${emailAlreadyInUse}') {
+                                displaySnackBar(context,
+                                    "${TheAccountAlreadyExistsForThatEmail}");
                               }
                             } catch (e) {
                               print(e);
@@ -160,14 +163,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             print("fcmToken ${fcmToken}");
 
                             /// Register in CloudFire Store user all data
-                           await userService.registerUserDetail(
+                            await userService.registerUserDetail(
                                 fNameController.text,
                                 lNameController.text,
                                 emailController.text,
                                 passwordController.text,
                                 uID,
                                 fcmToken);
-                           displaySnackBar(context, "Registration Successfully!");
+                            displaySnackBar(context, "${successRegister}");
                             setState(() {
                               Navigator.push(
                                   context,

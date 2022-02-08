@@ -1,3 +1,4 @@
+import 'package:chating/constants/string_constant.dart';
 import 'package:chating/pages/login/login_page.dart';
 import 'package:chating/pages/registration/register_page.dart';
 import 'package:flutter/material.dart';
@@ -10,13 +11,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-
-  }
 
 
   @override
@@ -32,7 +26,7 @@ class _HomePageState extends State<HomePage> {
                 ));
               },
               child: Text(
-                'LoginScreen',
+                '${loginScreen}',
                 style: TextStyle(color: Colors.white, fontSize: 18),
               ),
               style: ButtonStyle(
@@ -45,7 +39,7 @@ class _HomePageState extends State<HomePage> {
                 ));
               },
               child: Text(
-                'new user? Register Screen',
+                '${newUser}? ${registerScreen}',
                 style: TextStyle(color: Colors.black, fontSize: 18),
               ),
 

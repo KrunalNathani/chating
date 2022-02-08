@@ -1,5 +1,6 @@
 
-import 'package:chating/constants/constants.dart';
+import 'package:chating/constants/function_constants.dart';
+import 'package:chating/constants/string_constant.dart';
 import 'package:chating/local_data/shared_preference.dart';
 import 'package:chating/services/auth_service.dart';
 import 'package:chating/services/user_service.dart';
@@ -67,13 +68,13 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('OK'),
+              child:  Text(ok),
             ),
           ],
           content: Text(
             e.toString(),
           ),
-          title: const Text('Error'),
+          title: const Text(Error),
         ),
       );
     }
@@ -112,13 +113,13 @@ class _LoginPageState extends State<LoginPage> {
                         textInputType: TextInputType.emailAddress,
                         validatorOnTap: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Enter Your Email';
+                            return '${enterEmail}';
                           } else {
                             return null;
                           }
                         },
                         controller: emailController,
-                        hint: "Enter Your Email",
+                        hint: "${enterEmail}",
                       ),
                     ),
                     Padding(
@@ -126,14 +127,14 @@ class _LoginPageState extends State<LoginPage> {
                           horizontal: 15, vertical: 10),
                       child: CommonTextField(
                         controller: passwordController,
-                        hint: "Enter Your Password",
+                        hint: "${enterPassword}",
                         obscureText: !password ? false : true,
                         // textInputType: TextInputType.phone,
                         validatorOnTap: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Enter Your Password';
+                            return '${enterPassword}';
                           } else if (value.length <= 5) {
-                            return 'Min 6 character PassWord';
+                            return '${errorPasswordLength}';
                             // return 'Incorrect Email';
                           } else {
                             return null;
@@ -154,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
                       height: 15,
                     ),
                     Button(
-                        buttonText: "Login",
+                        buttonText: "${Login}",
                         pressedButton: () async {
                           FocusScope.of(context).requestFocus(FocusNode());
 
@@ -176,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                             await userService.loginUpdateToken(userID);
 
                             await LoginUIDData(userCredential.user!.uid);
-                            displaySnackBar(context, "Login Successfully!");
+                            displaySnackBar(context, "${successLogin}");
                             Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -187,11 +188,11 @@ class _LoginPageState extends State<LoginPage> {
                                 (route) => false);
 
                           } on FirebaseAuthException catch (e) {
-                            if (e.code == 'user-not-found') {
-                              displaySnackBar(context, "No user found for that email.");
-                            } else if (e.code == 'wrong-password') {
-                              print('Wrong password provided for that user.');
-                              displaySnackBar(context, "Wrong password provided for that user.");
+                            if (e.code == '${userNotFound}') {
+                              displaySnackBar(context, "${noUserFoundForEmail}");
+                            } else if (e.code == '${wrongPassword}') {
+                              print('${wrongPasswordProvidedForUser}');
+                              displaySnackBar(context, "${wrongPasswordProvidedForUser}");
                             }
                           }
                         }),

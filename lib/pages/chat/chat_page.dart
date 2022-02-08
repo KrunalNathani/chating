@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:chating/Notification/notification_api.dart';
+import 'package:chating/constants/string_constant.dart';
+import 'package:chating/services/user_service.dart';
 import 'package:chating/widget/chat_massage_design.dart';
-import 'package:chating/constants/constants.dart';
+import 'package:chating/constants/function_constants.dart';
 import 'package:chating/model/chat_screen_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
@@ -48,6 +50,8 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+  UserService userService = UserService();
+
   TextEditingController chatMassage = TextEditingController();
 
   /// massage type
@@ -87,12 +91,17 @@ class _ChatPageState extends State<ChatPage> {
   bool loading = false;
   double progress = 1;
 
+  setStateFunction(progress) {
+    setState(() {
+      progress = progress;
+    });
+  }
+
   String timeAgo = '';
   String timeUnit = '';
   int timeValue = 0;
   String? messageDate;
   DateTime? messageDatessss;
-
 
   getVerboseDateTimeRepresentation(DateTime dateTime) {
     print("dateTime ${dateTime}");
@@ -178,6 +187,7 @@ class _ChatPageState extends State<ChatPage> {
         ],
       ),
       body: StreamBuilder(
+
           /// chat room create and create chat massage user and receiver
           stream: FirebaseFirestore.instance
               .collection("chat")
@@ -187,7 +197,7 @@ class _ChatPageState extends State<ChatPage> {
               .snapshots(),
           builder:
               (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                List _messageList = [];
+            List _messageList = [];
             if (!snapshot.hasData) {
               return Center(
                 child: CircularProgressIndicator(),
@@ -232,11 +242,8 @@ class _ChatPageState extends State<ChatPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-
                               ListView.builder(
-
                                 itemCount: snapshot.data!.docs.length,
-
                                 itemBuilder: (context, index) {
                                   final element = snapshot.data!.docs[index];
                                   print("element ${element['dateTime']}");
@@ -259,29 +266,34 @@ class _ChatPageState extends State<ChatPage> {
                                   if (widget.senderUID !=
                                       element['senderUID']) {
                                     print("check Condition and data add");
-                                    readMessage(
-                                        element.id, element['receiverUID']);
-
+                                    userService.readMessages(
+                                        element.id,
+                                        element['receiverUID'],
+                                        widget.combineID);
                                   } else {
                                     print("data not add");
                                   }
 
                                   String messagesDate = DateFormat('dd/MM/yyyy')
                                       .format(
-                                      DateTime.fromMillisecondsSinceEpoch(
-                                          int.parse(element['dateTime'])));
-
+                                          DateTime.fromMillisecondsSinceEpoch(
+                                              int.parse(element['dateTime'])));
 
                                   print('lsit ${_messageList}');
                                   print('messagesDate ${messagesDate}');
-                                  print('messageList.contains(messagesDate) ${_messageList.contains(messagesDate)}');
+                                  print(
+                                      'messageList.contains(messagesDate) ${_messageList.contains(messagesDate)}');
 
-                                  if(!_messageList.contains(messagesDate)){
+                                  if (!_messageList.contains(messagesDate)) {
                                     _messageList.add(messagesDate);
                                     // messageLists = messageList.toSet();
                                     return Center(
-                                        child: Text("------ $messagesDate ------",style: TextStyle(fontSize: 16,color: Colors.black),));
-                                  }else{
+                                        child: Text(
+                                      "------ $messagesDate ------",
+                                      style: TextStyle(
+                                          fontSize: 16, color: Colors.black),
+                                    ));
+                                  } else {
                                     return ChatBubbleText(
                                       text: element['massage'],
                                       messageType: element['massageType'],
@@ -331,14 +343,13 @@ class _ChatPageState extends State<ChatPage> {
                                       // dateTime:
                                       //     '${DateFormat.jm().format(EpochToDateTime!)}',
                                       dateTime:
-                                      '${displayTimeAgoFromTimestamp(EpochToDateTime.toString())}',
+                                          '${displayTimeAgoFromTimestamp(EpochToDateTime.toString())}',
                                       senderName: widget.receiverUID ==
-                                          element['receiverUID']
+                                              element['receiverUID']
                                           ? '${widget.senderName}'
                                           : '${widget.receiverName}',
                                     );
                                   }
-
                                 },
                                 shrinkWrap: true,
                                 physics: NeverScrollableScrollPhysics(),
@@ -377,11 +388,9 @@ class _ChatPageState extends State<ChatPage> {
                                       children: [
                                         TextButton(
                                           onPressed: () async {
-                                            setState(() {
-
-                                            });
+                                            setState(() {});
                                             // setState(() async {
-                                             imageFiles = await getFromGallery();
+                                            imageFiles = await getFromGallery();
                                             // });
 
                                             if (imageFiles != null) {
@@ -451,21 +460,23 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                   Expanded(
                     flex: 4,
-                    child:imageFiles != null? Container(
-                      padding: EdgeInsets.all(5),
-                      height: 100,
-                      width: double.infinity,
-                      child: Image.file(imageFiles!),
-                    ): Container(
-                        padding: EdgeInsets.symmetric(vertical: 2),
-                        margin: EdgeInsets.symmetric(horizontal: 5),
-                        child: TextField(
-                          controller: chatMassage,
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Type a message',
-                          ),
-                        )),
+                    child: imageFiles != null
+                        ? Container(
+                            padding: EdgeInsets.all(5),
+                            height: 100,
+                            width: double.infinity,
+                            child: Image.file(imageFiles!),
+                          )
+                        : Container(
+                            padding: EdgeInsets.symmetric(vertical: 2),
+                            margin: EdgeInsets.symmetric(horizontal: 5),
+                            child: TextField(
+                              controller: chatMassage,
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                hintText: 'Type a message',
+                              ),
+                            )),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 5.0),
@@ -480,49 +491,41 @@ class _ChatPageState extends State<ChatPage> {
                               urlComplete = true;
                             });
 
-                            await upload_DownloadURL_File();
+                            imgUrl1 = await userService
+                                .uploadImageAndDownloadURL(imageFiles);
                             print("imageFile==> $imageFiles");
                             // await downloadURLExample();
+
+                            imageFiles = null;
+                            setState(() {
+                              urlComplete = false;
+                            });
                             types = "Image";
                           }
 
-                          /// Video upload and download url
-                          if (videoFiles != null) {
-                            setState(() {
-                              vidUrlComplete = true;
-                            });
-
-                            // await uploadVideoFile();
-                            print("vidFile==> $videoFiles");
-                            await downloadVideoURLExample();
-                            types = "Video";
-                          }
-
-                          /// create chat and chats entry in fire store
-                          final FirebaseFirestore fireStore =
-                              FirebaseFirestore.instance;
-                          // print('chatMAssages ;- ${chatMassage.text}');
-
-                          /// create two uer combine IDs and add pass model
-                          final CollectionReference _mainCollection =
-                              fireStore.collection('chat');
+                          // /// Video upload and download url
+                          // if (videoFiles != null) {
+                          //   setState(() {
+                          //     vidUrlComplete = true;
+                          //   });
+                          //
+                          //   // await uploadVideoFile();
+                          //   print("vidFile==> $videoFiles");
+                          //   await downloadVideoURLExample();
+                          //   types = "Video";
+                          // }
 
                           /// DateTime to convert ephoch time
                           final DateTime date = DateTime.now();
 
                           dateTimeToEpoch = date.millisecondsSinceEpoch;
-                          print('dddddddd ==> $dateTimeToEpoch (milliseconds)');
-
-
-                          print("imageURL ${imgUrl1}");
 
                           /// send notification receiver
                           sendNotification(
                               chatMassage.text,
                               widget.senderName.toString(),
                               widget.receiverFCMToken.toString(),
-                              imgUrl1.toString()
-                          );
+                              imgUrl1.toString());
 
                           /// chetDetailsModel through add data in firestore
                           ChatDetailsModel model = ChatDetailsModel(
@@ -539,7 +542,6 @@ class _ChatPageState extends State<ChatPage> {
                               CombineID: widget.combineID,
                               readMessage: false);
 
-
                           /// this types is selected and after value is null so this types = '';
                           types = '';
                           imgUrl1 = '';
@@ -548,16 +550,7 @@ class _ChatPageState extends State<ChatPage> {
                           /// Chat Massage TextField Clear
                           chatMassage.clear();
 
-                          print("modelllll => ${model.toJson()}");
-
-                          /// create two uer chatting collection in firebase
-                          await _mainCollection
-                              .doc('${widget.combineID}')
-                              .collection('Chats')
-                              .add(model.toJson())
-                              .catchError((e) => print(e));
-
-
+                          userService.createChatRoom(model, widget.combineID);
                         }
                       },
                       icon: Icon(Icons.send),
@@ -595,13 +588,15 @@ class _ChatPageState extends State<ChatPage> {
                   Clipboard.setData(new ClipboardData(text: url)).then((value) {
                     //only if ->
                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Copy Successfully')));
+                        SnackBar(content: Text('${CopySuccessfully}')));
                   });
                   print(
                       "uuurl ${Clipboard.setData(new ClipboardData(text: url))}");
+
+                  Navigator.pop(context);
                 },
                 icon: Icon(Icons.copy),
-                label: Text('Copy')),
+                label: Text('${Copy}')),
             value: '1'),
         PopupMenuItem<String>(
             child: TextButton.icon(
@@ -610,14 +605,15 @@ class _ChatPageState extends State<ChatPage> {
                   setState(() {
                     loading = true;
                   });
-
-                  await downloadFile(url);
+                  print("url11 ${url}");
+                  // await downloadFile(url,setStateFunction);
+                  await downloadFile(url, setStateFunction, context);
                   setState(() {
                     loading = false;
                   });
                 },
                 icon: Icon(Icons.download),
-                label: Text('Download')),
+                label: Text('${Download}')),
             value: '2'),
         PopupMenuItem<String>(
             child: TextButton.icon(
@@ -628,20 +624,21 @@ class _ChatPageState extends State<ChatPage> {
                     builder: (BuildContext context) {
                       // return object of type Dialog
                       return AlertDialog(
-                        title: new Text("Alert"),
-                        content: new Text("Are you sure delete message!"),
+                        title: new Text("${alert}"),
+                        content: new Text("${AreYouSureDeleteMessage}"),
                         actions: <Widget>[
                           // usually buttons at the bottom of the dialog
                           TextButton(
-                            child: new Text("Close"),
+                            child: new Text("${Close}"),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: new Text("delete"),
+                            child: new Text("${delete}"),
                             onPressed: () {
-                              deleteImageTyeMessage(url);
+                              userService.deleteImageTypeMessage(
+                                  url, widget.combineID, context);
                               Navigator.pop(context);
                             },
                           ),
@@ -651,7 +648,7 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 },
                 icon: Icon(Icons.delete),
-                label: Text('Delete')),
+                label: Text('${Delete}')),
             value: '2'),
       ],
       elevation: 8.0,
@@ -687,13 +684,14 @@ class _ChatPageState extends State<ChatPage> {
                       .then((value) {
                     //only if ->
                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Copy Successfully')));
+                        SnackBar(content: Text('${CopySuccessfully}')));
                   });
                   print(
                       "uuurl ${Clipboard.setData(new ClipboardData(text: message))}");
+                  Navigator.pop(context);
                 },
                 icon: Icon(Icons.copy),
-                label: Text('Copy')),
+                label: Text('${Copy}')),
             value: '1'),
         PopupMenuItem<String>(
             child: TextButton.icon(
@@ -704,20 +702,21 @@ class _ChatPageState extends State<ChatPage> {
                     builder: (BuildContext context) {
                       // return object of type Dialog
                       return AlertDialog(
-                        title: new Text("Alert"),
-                        content: new Text("Are you sure delete message!"),
+                        title: new Text("${alert}"),
+                        content: new Text("${AreYouSureDeleteMessage}"),
                         actions: <Widget>[
                           // usually buttons at the bottom of the dialog
                           TextButton(
-                            child: new Text("Close"),
+                            child: new Text("${Close}"),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: new Text("delete"),
+                            child: new Text("${delete}"),
                             onPressed: () {
-                              deleteTextTypeMessage(message);
+                              userService.deleteTextTypeMessage(
+                                  message, widget.combineID, context);
                               Navigator.pop(context);
                             },
                           ),
@@ -727,7 +726,7 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 },
                 icon: Icon(Icons.delete),
-                label: Text('Delete')),
+                label: Text('${Delete}')),
             value: '2'),
       ],
       elevation: 8.0,
@@ -765,20 +764,20 @@ class _ChatPageState extends State<ChatPage> {
                     builder: (BuildContext context) {
                       // return object of type Dialog
                       return AlertDialog(
-                        title: new Text("Alert"),
-                        content: new Text("Are you sure Clear Chat!"),
+                        title: new Text("${alert}"),
+                        content: new Text("${AreYouSureClearChat}"),
                         actions: <Widget>[
                           // usually buttons at the bottom of the dialog
                           TextButton(
-                            child: new Text("Close"),
+                            child: new Text("${Close}"),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: new Text("Clear"),
+                            child: new Text("${Clear}"),
                             onPressed: () async {
-                              await clearChat();
+                              await userService.clearChat(widget.combineID);
                               Navigator.pop(context);
                             },
                           ),
@@ -788,7 +787,7 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 },
                 icon: Icon(Icons.delete),
-                label: Text('Clear Chat')),
+                label: Text('${ClearChat}')),
             value: '2'),
       ],
       elevation: 8.0,
@@ -806,312 +805,4 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-
-  /// image upload cloud store and get image url
-  Future<void> upload_DownloadURL_File() async {
-    var storageImage = FirebaseStorage.instance.ref(imageFiles!.path);
-    UploadTask task1 = storageImage.putFile(imageFiles!);
-    imgUrl1 = await (await task1).ref.getDownloadURL();
-
-    print('upload $imgUrl1');
-    imageFiles = null;
-    setState(() {
-      urlComplete = false;
-    });
-  }
-
-  /// get image url in cloud storage and send this url in model
-//   Future<void> downloadURLExample() async {
-//     var storageimage = FirebaseStorage.instance.ref().child(imageFiles!.path);
-//
-//
-// // to get the url of the image from firebase storage
-//
-//     print("imgUrl1 ${imgUrl1}");
-//
-//     // Within your widgets:
-//     // Image.network(downloadURL);
-//
-//   }
-
-  /// delete message
-  deleteTextTypeMessage(String? message) {
-    print('selectDateTime ${dateTimeToEpoch}');
-    FirebaseFirestore.instance
-        .collection("chat")
-        .doc(widget.combineID)
-        .collection("Chats")
-        // .where("dateTime", isEqualTo: dateTimeToEpoch.toString())
-        .where('massage', isEqualTo: message)
-        .get()
-        .then((value) {
-      value.docs.forEach((element) {
-        FirebaseFirestore.instance
-            .collection("chat")
-            .doc(widget.combineID)
-            .collection("Chats")
-            .doc(element.id)
-            .delete()
-            .then((value) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('message delete successfully!')));
-          print("Success!");
-        });
-      });
-    });
-  }
-
-  /// delete message
-  deleteImageTyeMessage(String? url) {
-    print('selectDateTime ${dateTimeToEpoch}');
-    FirebaseFirestore.instance
-        .collection("chat")
-        .doc(widget.combineID)
-        .collection("Chats")
-        // .where("dateTime", isEqualTo: dateTimeToEpoch.toString())
-        .where('url', isEqualTo: url)
-        .get()
-        .then((value) {
-      value.docs.forEach((element) {
-        FirebaseFirestore.instance
-            .collection("chat")
-            .doc(widget.combineID)
-            .collection("Chats")
-            .doc(element.id)
-            .delete()
-            .then((value) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('message delete successfully!')));
-          print("Success!");
-        });
-      });
-    });
-  }
-
-  /// clear Chat
-  clearChat() async {
-    final instance = FirebaseFirestore.instance;
-    final batch = instance.batch();
-    var collection =
-        instance.collection('chat').doc(widget.combineID).collection('Chats');
-    var snapshots = await collection.get();
-    for (var doc in snapshots.docs) {
-      batch.delete(doc.reference);
-    }
-    await batch.commit();
-  }
-
-  /// message show or not function
-  readMessage(id, id1) async {
-    FirebaseFirestore.instance
-        .collection("chat")
-        .doc(widget.combineID)
-        .collection("Chats")
-        .where('senderUID', isEqualTo: id1)
-        .snapshots()
-        .listen((event) async {
-      final DocumentReference documentReference = FirebaseFirestore.instance
-          .collection("chat")
-          .doc(widget.combineID)
-          .collection("Chats")
-          .doc(id);
-      documentReference.update({'readMessage': true});
-    });
-  }
-
-  /// video pickup from gallery
-  getVideoFromGallery() async {
-    XFile? pickedFiles =
-        await ImagePicker().pickVideo(source: ImageSource.gallery);
-
-    if (pickedFiles != null) {
-      setState(() {
-        videoFiles = File(pickedFiles.path);
-        print('gallery videoFiles ==> ${videoFiles}');
-      });
-    }
-  }
-
-  //
-  // Future<void> uploadVideoFile() async {
-  //   final String fileName = path.basename(videoFiles!.path);
-  //
-  //   upload = storage.ref(fileName).putFile(videoFiles!);
-  //   print('upload $upload');
-  // }
-
-  /// get image url in cloud storage and send this url in model
-  Future<void> downloadVideoURLExample() async {
-    var storageimage = FirebaseStorage.instance.ref().child(videoFiles!.path);
-    UploadTask task1 = storageimage.putFile(videoFiles!);
-
-// to get the url of the image from firebase storage
-    vidUrl = await (await task1).ref.getDownloadURL();
-    print("imgUrl1 ${vidUrl}");
-
-    // Within your widgets:
-    // Image.network(downloadURL);
-    videoFiles = null;
-    setState(() {
-      vidUrlComplete = false;
-    });
-
-    _controller = VideoPlayerController.network(vidUrl!)
-      ..initialize().then((_) {
-        // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
-        setState(() {});
-      });
-  }
-
-  /// Download image in your gallery
-  Future<bool> saveImage(String url, String fileName) async {
-    Directory directory;
-    try {
-      if (Platform.isAndroid) {
-        if (await _requestPermission(Permission.storage)) {
-          directory = (await getExternalStorageDirectory())!;
-
-          String newPath = "";
-
-          print(directory);
-          List<String> paths = directory.path.split("/");
-          for (int x = 1; x < paths.length; x++) {
-            String folder = paths[x];
-            if (folder != "Android") {
-              newPath += "/" + folder;
-            } else {
-              break;
-            }
-          }
-          newPath = newPath + "/Chatting App";
-          directory = Directory(newPath);
-        } else {
-          return false;
-        }
-      } else {
-        if (await _requestPermission(Permission.photos)) {
-          directory = await getTemporaryDirectory();
-        } else {
-          return false;
-        }
-      }
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-      if (await directory.exists()) {
-        File saveFile = File(directory.path + "/$fileName");
-        print("saveFile => $saveFile");
-        print("direc => $directory");
-        await dio.download(url, saveFile.path,
-            onReceiveProgress: (value1, value2) {
-          setState(() {
-            progress = value1 / value2;
-          });
-        });
-
-        if (Platform.isIOS) {
-          await ImageGallerySaver.saveFile(saveFile.path,
-              isReturnPathOfIOS: true);
-        }
-        return true;
-      }
-      if (await directory.exists()) {
-        File saveFile = File(directory.path + "/$fileName");
-        print("saveFile => $saveFile");
-        await dio.download(url, saveFile.path,
-            onReceiveProgress: (value1, value2) {
-          setState(() {
-            progress = value1 / value2;
-          });
-        });
-
-        if (Platform.isIOS) {
-          await ImageGallerySaver.saveFile(saveFile.path,
-              isReturnPathOfIOS: true);
-        }
-        return true;
-      }
-    } catch (e) {
-      print(e);
-    }
-    return false;
-  }
-
-  downloadFile(String? imageDownload) async {
-    // saveVideo will download and save file to Device and will return a boolean
-    // for if the file is successfully or not\
-
-    bool downloaded =
-        await saveImage(imageDownload!, "v_${DateTime.now()}.jpg");
-
-    if (downloaded) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Image Save Successfully!")));
-      print("downloaded => $downloaded");
-      print("File Downloaded");
-    } else {
-      print("Problem Downloading File");
-    }
-  }
-
-  Future<bool> _requestPermission(Permission permission) async {
-    if (await permission.isGranted) {
-      return true;
-    } else {
-      var result = await permission.request();
-      if (result == PermissionStatus.granted) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  static String displayTimeAgoFromTimestamp(String? timestamp) {
-    // final year = int.parse(timestamp!.substring(0, 4));
-    // final month = int.parse(timestamp.substring(5, 7));
-    // final day = int.parse(timestamp.substring(8, 10));
-    // final hour = int.parse(timestamp.substring(11, 13));
-    // final minute = int.parse(timestamp.substring(14, 16));
-
-    // final DateTime videoDate = DateTime(year, month, day, hour, minute);
-    // final int diffInHours = DateTime.now().difference(videoDate).inHours;
-
-    // DateTime messageDate = Timestamp.fromMillisecondsSinceEpoch(int.parse(timestamp!)).toDate();
-
-    DateTime messageDate = DateTime.parse(timestamp!);
-
-    final int diffInHours = DateTime.now().difference(messageDate).inHours;
-
-    String? timeAgo = '';
-    String? timeUnit = '';
-    int timeValue = 0;
-
-    if (diffInHours < 1) {
-      final diffInMinutes = DateTime.now().difference(messageDate).inMinutes;
-      timeValue = diffInMinutes;
-      timeUnit = 'minute';
-    } else if (diffInHours < 24) {
-      timeValue = diffInHours;
-      timeUnit = 'hour';
-    } else if (diffInHours >= 24 && diffInHours < 24 * 7) {
-      timeValue = (diffInHours / 24).floor();
-      timeUnit = 'day';
-    } else if (diffInHours >= 24 * 7 && diffInHours < 24 * 30) {
-      timeValue = (diffInHours / (24 * 7)).floor();
-      timeUnit = 'week';
-    } else if (diffInHours >= 24 * 30 && diffInHours < 24 * 12 * 30) {
-      timeValue = (diffInHours / (24 * 30)).floor();
-      timeUnit = 'month';
-    } else {
-      timeValue = (diffInHours / (24 * 365)).floor();
-      timeUnit = 'year';
-    }
-
-    timeAgo = timeValue.toString() + ' ' + timeUnit;
-    timeAgo += timeValue > 1 ? 's' : '';
-
-    print("timeAgo ${timeAgo}");
-
-    return timeAgo + ' ago';
-  }
 }

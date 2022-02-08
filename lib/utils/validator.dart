@@ -1,11 +1,12 @@
+import 'package:chating/constants/string_constant.dart';
 import 'package:flutter/material.dart';
 
 String? nameValidation(String? value) {
   RegExp regex = RegExp(r'^[a-zA-Z]+$');
   if (value == null || value.isEmpty) {
-    return 'Enter User Name';
+    return '${enterFirstName}';
   } else if (!regex.hasMatch(value)) {
-    return 'Only Alphabet Allow';
+    return '${onlyAlphabetAllow}';
   } else {
     return null;
   }
@@ -16,10 +17,10 @@ String? emailValidation(String? value) {
       r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+";
   RegExp regex = RegExp(pattern);
   if (value == null || value.isEmpty) {
-    return 'Enter Email Address';
+    return '${enterEmail}';
   }
   else if (!regex.hasMatch(value)) {
-    return 'Enter Valid Email Address';
+    return '${errorEmail}';
   }
   else {
     return null;
@@ -28,9 +29,9 @@ String? emailValidation(String? value) {
 
 String? passwordValidation(String? value,String? text) {
   if (value == null || value.isEmpty) {
-    return 'Enter PassWord';
+    return '${enterPassword}';
   } else if (text!.length <= 5) {
-    return 'Enter Min 6 Character PassWord';
+    return '${errorPasswordLength}';
   }
   else {
     return null;
@@ -40,12 +41,12 @@ String? passwordValidation(String? value,String? text) {
 confirmPassWordValidation
       (String? value,String? text,String textMatch) {
     if (value == null || value.isEmpty) {
-      return 'Enter Confirm PassWord';
+      return '${enterConfirmPassword}';
     } else if (text !=
         textMatch) {
-      return 'Confirm Password Not Match';
+      return '${confirmPasswordNotMatch}';
     } else if (textMatch.length <= 5) {
-      return 'Enter Min 6 Character PassWord';
+      return '${errorPasswordLength}';
     } else {
       return null;
     }
@@ -55,57 +56,14 @@ confirmPassWordValidation
 checkPassWordValidation
     (String? value,String? text,String textMatch) {
   if (value == null || value.isEmpty) {
-    return 'Enter Your PassWord';
+    return '${enterPassword}';
   } else if (text !=
       textMatch) {
-    return 'Incorrect Password';
+    return '${passwordNotMatch}';
   } else if (textMatch.length <= 5) {
-    return 'Incorrect Password';
+    return '${wrongPassword}';
   } else {
     return null;
   }
 }
 
-String? loginEmailValidation(String? value) {
-  String pattern =
-      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+";
-  RegExp regex = RegExp(pattern);
-  if (value == null || value.isEmpty) {
-    return 'Enter Email Address';
-  }
-  else if (!regex.hasMatch(value)) {
-    return 'Enter Valid Email Address';
-  }
-  else {
-    return null;
-  }
-}
-
-
-String? loginPasswordValidation(String? value) {
-  if (value == null || value.isEmpty) {
-    return 'Enter Your Password';
-  } else if (value.length <= 5) {
-   // return 'Min 6 character PassWord';
-    return 'Incorrect Password';
-  }
-  else {
-    return null;
-  }
-}
-
-//
-// TabBarView(
-// physics: const ScrollPhysics(),
-// dragStartBehavior: DragStartBehavior.down,
-// children: [
-// RegisterScreen(userModel: widget.userModel,),
-// // ignore: prefer_const_constructors
-// FillDataScreen(
-// // userModel: widget.userModel,
-// // listIndex: widget.index,
-// ),
-// const ShowDataScreen(),
-// ],
-// controller: tabController,
-// );
