@@ -19,4 +19,8 @@ authCreateUSer(String? email,String? password)async{
         password: password!);
   return userCredential;
   }
+
+  logOutAuth()async{
+    await FirebaseAuth.instance.signOut();
+  }
 }

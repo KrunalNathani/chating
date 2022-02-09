@@ -14,8 +14,8 @@ Widget receiverUnreadMessage(String ID) {
       stream: FirebaseFirestore.instance
           .collection("${chat}")
           .doc(_chatRoomID)
-          .collection("${Chats}")
-          .where('${CombineID}', isEqualTo: _chatRoomID)
+          .collection("${chats}")
+          .where('${combineID}', isEqualTo: _chatRoomID)
           .where('${senderUID}', isEqualTo: ID)
           .where('${readMessage}', isEqualTo: false)
           .snapshots(),
@@ -38,3 +38,4 @@ Widget receiverUnreadMessage(String ID) {
         }
       });
 }
+

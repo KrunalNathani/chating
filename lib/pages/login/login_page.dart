@@ -1,9 +1,9 @@
-
 import 'package:chating/constants/function_constants.dart';
 import 'package:chating/constants/string_constant.dart';
 import 'package:chating/local_data/shared_preference.dart';
 import 'package:chating/services/auth_service.dart';
-import 'package:chating/services/user_service.dart';
+import 'package:chating/services/login_service.dart';
+import 'package:chating/services/notification_service.dart';
 import 'package:chating/widget/common_text_field.dart';
 import 'package:chating/model/user_model.dart';
 import 'package:chating/pages/chat/chat_user_page.dart';
@@ -13,7 +13,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 String email = "";
 String yourPassword = "";
@@ -28,9 +27,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   AuthService authService = AuthService();
-  UserService userService = UserService();
+  LoginService loginService = LoginService();
 
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
@@ -68,13 +66,13 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child:  Text(ok),
+              child: Text(ok),
             ),
           ],
           content: Text(
             e.toString(),
           ),
-          title: const Text(Error),
+          title: const Text(error),
         ),
       );
     }
@@ -86,8 +84,6 @@ class _LoginPageState extends State<LoginPage> {
 
     super.initState();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -160,32 +156,31 @@ class _LoginPageState extends State<LoginPage> {
                           FocusScope.of(context).requestFocus(FocusNode());
 
                           try {
-
-                            setState(() {});
-
-                            UserCredential userCredential =await authService.checkAuthUser(emailController.text, passwordController.text);
-
+                            UserCredential userCredential =
+                                await authService.checkAuthUser(
+                                    emailController.text,
+                                    passwordController.text);
                             userID = userCredential.user!.uid;
                             print("userID ${userID}");
-                            await userService.loginUpdateToken(userID);
+                            await loginService.loginUpdateToken(userID);
 
-                            await loginUIDData(userCredential.user!.uid);
+                            await setLoginPrefData(userCredential.user!.uid);
                             displaySnackBar(context, "${successLogin}");
                             Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => ChatUserPage(
                                           UID: userID,
-                                        )
-                                ),
+                                        )),
                                 (route) => false);
-
                           } on FirebaseAuthException catch (e) {
                             if (e.code == '${userNotFound}') {
-                              displaySnackBar(context, "${noUserFoundForEmail}");
+                              displaySnackBar(
+                                  context, "${noUserFoundForEmail}");
                             } else if (e.code == '${wrongPassword}') {
                               print('${wrongPasswordProvidedForUser}');
-                              displaySnackBar(context, "${wrongPasswordProvidedForUser}");
+                              displaySnackBar(
+                                  context, "${wrongPasswordProvidedForUser}");
                             }
                           }
                         }),
@@ -198,7 +193,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
-
-
 }

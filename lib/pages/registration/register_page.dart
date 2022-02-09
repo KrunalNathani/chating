@@ -1,7 +1,8 @@
 import 'package:chating/constants/function_constants.dart';
 import 'package:chating/constants/string_constant.dart';
 import 'package:chating/services/auth_service.dart';
-import 'package:chating/services/user_service.dart';
+import 'package:chating/services/register_service.dart';
+import 'package:chating/services/notification_service.dart';
 import 'package:chating/widget/common_text_field.dart';
 import 'package:chating/model/user_model.dart';
 import 'package:chating/pages/login/login_page.dart';
@@ -20,7 +21,7 @@ class RegistrationPage extends StatefulWidget {
 
 class _RegistrationPageState extends State<RegistrationPage> {
   AuthService authService = AuthService();
-  UserService userService = UserService();
+  RegisterService registerService = RegisterService();
 
   final GlobalKey<FormState> _key = GlobalKey<FormState>();
   TextEditingController fNameController = TextEditingController();
@@ -133,7 +134,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       height: 15,
                     ),
                     Button(
-                        buttonText: "${Register}",
+                        buttonText: "${register}",
                         pressedButton: () async {
                           if (_key.currentState!.validate()) {
                             /// Authentication Email and Password
@@ -149,21 +150,21 @@ class _RegistrationPageState extends State<RegistrationPage> {
                               if (e.code == '${weakPassword}') {
                                 print('The password provided is too weak.');
                                 displaySnackBar(
-                                    context, "${ThePasswordProvidedIsTooWeak}");
+                                    context, "${thePasswordProvidedIsTooWeak}");
                               } else if (e.code == '${emailAlreadyInUse}') {
                                 displaySnackBar(context,
-                                    "${TheAccountAlreadyExistsForThatEmail}");
+                                    "${theAccountAlreadyExistsForThatEmail}");
                               }
                             } catch (e) {
                               print(e);
                             }
 
                             /// Create FCM TOKEN
-                            fcmToken = await userService.getToken();
+                            fcmToken = await registerService.getToken();
                             print("fcmToken ${fcmToken}");
 
                             /// Register in CloudFire Store user all data
-                            await userService.registerUserDetail(
+                            await registerService.registerUserDetail(
                                 fNameController.text,
                                 lNameController.text,
                                 emailController.text,

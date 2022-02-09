@@ -1,7 +1,10 @@
 import 'package:chating/constants/string_constant.dart';
+import 'package:chating/local_data/shared_preference.dart';
 import 'package:chating/pages/chat/receiver_unread_message.dart';
 import 'package:chating/pages/login/login_page.dart';
-import 'package:chating/services/user_service.dart';
+import 'package:chating/services/auth_service.dart';
+import 'package:chating/services/chat_user_service.dart';
+import 'package:chating/services/notification_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,7 +23,8 @@ class ChatUserPage extends StatefulWidget {
 }
 
 class _ChatUserPageState extends State<ChatUserPage> {
-  UserService userService = UserService();
+  AuthService authService = AuthService();
+  ChatUserService chatUserService = ChatUserService();
 
   String? senderName;
   String? receiverName;
@@ -37,14 +41,12 @@ class _ChatUserPageState extends State<ChatUserPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${ChatScreen}'),
+        title: Text('${chatScreen}'),
         actions: [
           TextButton(
               onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                final prefs = await SharedPreferences.getInstance();
-                final success = await prefs.remove('${LoginUID}');
-                print("Success ${success}");
+                await authService.logOutAuth();
+                await removePrefData();
 
                 Navigator.pushReplacement(
                     context,
@@ -53,7 +55,7 @@ class _ChatUserPageState extends State<ChatUserPage> {
                     ));
               },
               child: Text(
-                '${LOGOUT}',
+                '${logOut}',
                 style: TextStyle(color: Colors.white),
               ))
         ],
@@ -71,7 +73,7 @@ class _ChatUserPageState extends State<ChatUserPage> {
                   image: NetworkImage('${bgImageURL}'), fit: BoxFit.contain)),
         ),
         StreamBuilder(
-            stream: userService.showMessageAllData(widget.UID),
+            stream: chatUserService.showMessageAllData(widget.UID),
             builder:
                 (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
               print("widget.UID11 ${widget.UID}");
@@ -95,7 +97,7 @@ class _ChatUserPageState extends State<ChatUserPage> {
                               print("widget.UID ${widget.UID}");
 
                               /// sender Data
-                            Map<String, dynamic> senderData = await userService.receiverDetailsCollect(widget.UID);
+                            Map<String, dynamic> senderData = await chatUserService.receiverDetailsCollect(widget.UID);
 
                               /// find sender Name
                               senderName = "${senderData['fName']} ${senderData['lName']} ";
@@ -105,7 +107,7 @@ class _ChatUserPageState extends State<ChatUserPage> {
 
                               /// receiver Data
                               Map<String, dynamic> receiverData =
-                                  await userService.receiverDetailsCollect(
+                                  await chatUserService.receiverDetailsCollect(
                                 document.id,
                               );
 

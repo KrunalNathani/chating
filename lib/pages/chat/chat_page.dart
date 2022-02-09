@@ -1,10 +1,12 @@
 import 'dart:io';
-import 'package:chating/Notification/notification_api.dart';
 import 'package:chating/constants/string_constant.dart';
-import 'package:chating/services/user_service.dart';
+import 'package:chating/services/chat_service.dart';
+import 'package:chating/services/notification_service.dart';
 import 'package:chating/widget/chat_massage_design.dart';
 import 'package:chating/constants/function_constants.dart';
 import 'package:chating/model/chat_screen_model.dart';
+import 'package:chating/widget/common_text_button.dart';
+import 'package:chating/widget/common_text_field.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -13,11 +15,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 
 String? massageType;
@@ -50,7 +49,8 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  UserService userService = UserService();
+  ChatService chatService = ChatService();
+  NotificationService notificationService = NotificationService();
 
   TextEditingController chatMassage = TextEditingController();
 
@@ -103,44 +103,6 @@ class _ChatPageState extends State<ChatPage> {
   String? messageDate;
   DateTime? messageDatessss;
 
-  // getVerboseDateTimeRepresentation(DateTime dateTime) {
-  //   print("dateTime ${dateTime}");
-  //   DateTime now = DateTime.now();
-  //   DateTime justNow = now.subtract(Duration(minutes: 1));
-  //   DateTime localDateTime = dateTime.toLocal();
-  //   print("localDateTime ${localDateTime}");
-  //   if (!localDateTime.difference(justNow).isNegative) {
-  //     print("messageDate @ ${messageDate}");
-  //     return messageDate = 'Today';
-  //   }
-  //
-  //   // String roughTimeString = DateFormat('jm').format(dateTime);
-  //   // print("roughTimeString ${roughTimeString}");
-  //   // if (localDateTime.day == now.day &&
-  //   //     localDateTime.month == now.month &&
-  //   //     localDateTime.year == now.year) {
-  //   //   print("messageDate @@ ${messageDate}");
-  //   //   return  roughTimeString;
-  //   // }
-  //
-  //   DateTime yesterday = now.subtract(Duration(days: 1));
-  //   print("yesterday ${yesterday}");
-  //   if (localDateTime.day == yesterday.day &&
-  //       localDateTime.month == yesterday.month &&
-  //       localDateTime.year == yesterday.year) {
-  //     print("messageDate @@@ ${messageDate}");
-  //     return messageDate = 'Yesterday, ';
-  //   }
-  //
-  //   if (now.difference(localDateTime).inDays < 4) {
-  //     String weekday = DateFormat('EEEE').format(localDateTime);
-  //
-  //     print("messageDate @@@@ ${messageDate}");
-  //     return messageDate = '$weekday';
-  //   }
-  //
-  //   return messageDate = '${DateFormat('yMd').format(dateTime)}';
-  // }
 
   @override
   void initState() {
@@ -266,7 +228,7 @@ class _ChatPageState extends State<ChatPage> {
                                   if (widget.senderUID !=
                                       element['senderUID']) {
                                     print("check Condition and data add");
-                                    userService.readMessages(
+                                    chatService.readMessages(
                                         element.id,
                                         element['receiverUID'],
                                         widget.combineID);
@@ -370,93 +332,49 @@ class _ChatPageState extends State<ChatPage> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextButton.icon(
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          elevation: 20,
-                          builder: (context) {
-                            return Container(
-                              height: MediaQuery.of(context).size.height * 0.15,
-                              color: Colors.transparent,
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: ListView(
-                                  children: [
-                                    Column(
-                                      children: [
-                                        TextButton(
-                                          onPressed: () async {
-                                            setState(() {});
-                                            // setState(() async {
-                                            imageFiles = await getFromGallery();
-                                            // });
+                    child: CommonTextButton(onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        elevation: 20,
+                        builder: (context) {
+                          return Container(
+                            height: MediaQuery.of(context).size.height * 0.15,
+                            color: Colors.transparent,
+                            child: Padding(
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: TextButton(
+                                onPressed: () async {
 
-                                            if (imageFiles != null) {
-                                              Navigator.pop(context);
-                                            }
+                                  imageFiles = await getFromGallery();
+                                  setState(() {});
 
-                                            // if (videoFiles != null) {
-                                            //   Navigator.pop(context);
-                                            //   chatMassage.text =
-                                            //       videoFiles.toString();
-                                            // }
+                                  if (imageFiles != null) {
+                                    Navigator.pop(context);
+                                  }
 
-                                            print("imageFile==> $videoFiles");
-                                          },
-                                          child: Text(
-                                            "Images",
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 17),
-                                          ),
-                                          style: ButtonStyle(
-                                              backgroundColor:
-                                                  MaterialStateProperty.all(
-                                                      Colors.blue)),
-                                        ),
-                                      ],
-                                    ),
-                                    // TextButton(
-                                    //   onPressed: () async{
-                                    //
-                                    //     await getVideoFromGallery();
-                                    //
-                                    //     if (videoFiles != null) {
-                                    //       Navigator.pop(context);
-                                    //       chatMassage.text = videoFiles.toString();
-                                    //     }
-                                    //
-                                    //     print("videoFile==> $videoFiles");
-                                    //     types = 'Videos';
-                                    //
-                                    //       // _pickVideo();
-                                    //
-                                    //   },
-                                    //   child: Text(
-                                    //     "Videos",
-                                    //     style: TextStyle(
-                                    //         color: Colors.white, fontSize: 17),
-                                    //   ),
-                                    //   style: ButtonStyle(
-                                    //       backgroundColor:
-                                    //           MaterialStateProperty.all(
-                                    //               Colors.blue)),
-                                    // ),
-                                  ],
+                                },
+                                child: Text(
+                                  "Images",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17),
                                 ),
+                                style: ButtonStyle(
+                                    backgroundColor:
+                                    MaterialStateProperty.all(
+                                        Colors.blue)),
                               ),
-                            );
-                          },
-                        );
-                      },
-                      icon: Icon(
-                        Icons.add_photo_alternate,
-                        size: 30,
-                      ),
-                      label: Text(''),
-                    ),
+                            ),
+                          );
+                        },
+                      );
+                    },icon: Icon(
+                          Icons.add_photo_alternate,
+                          size: 30,
+                        ),
+                        lable: Text(''),),
+
                   ),
                   Expanded(
                     flex: 4,
@@ -470,17 +388,14 @@ class _ChatPageState extends State<ChatPage> {
                         : Container(
                             padding: EdgeInsets.symmetric(vertical: 2),
                             margin: EdgeInsets.symmetric(horizontal: 5),
-                            child: TextField(
-                              controller: chatMassage,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Type a message',
-                              ),
+                            child: CommonTextField(
+                              controller: chatMassage,hint: 'Type a message',
                             )),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 5.0),
-                    child: TextButton.icon(
+
+                    child: CommonTextButton(
                       onPressed: () async {
                         types = "text";
                         if (imageFiles != null && chatMassage.text.isEmpty ||
@@ -491,7 +406,7 @@ class _ChatPageState extends State<ChatPage> {
                               urlComplete = true;
                             });
 
-                            imgUrl1 = await userService
+                            imgUrl1 = await chatService
                                 .uploadImageAndDownloadURL(imageFiles);
                             print("imageFile==> $imageFiles");
                             // await downloadURLExample();
@@ -503,25 +418,13 @@ class _ChatPageState extends State<ChatPage> {
                             types = "Image";
                           }
 
-                          // /// Video upload and download url
-                          // if (videoFiles != null) {
-                          //   setState(() {
-                          //     vidUrlComplete = true;
-                          //   });
-                          //
-                          //   // await uploadVideoFile();
-                          //   print("vidFile==> $videoFiles");
-                          //   await downloadVideoURLExample();
-                          //   types = "Video";
-                          // }
-
                           /// DateTime to convert ephoch time
                           final DateTime date = DateTime.now();
 
                           dateTimeToEpoch = date.millisecondsSinceEpoch;
 
                           /// send notification receiver
-                          sendNotification(
+                          notificationService.sendNotification(
                               chatMassage.text,
                               widget.senderName.toString(),
                               widget.receiverFCMToken.toString(),
@@ -542,9 +445,7 @@ class _ChatPageState extends State<ChatPage> {
                               CombineID: widget.combineID,
                               readMessage: false);
 
-
-
-                          userService.createChatRoom(model, widget.combineID);
+                          chatService.createChatRoom(model, widget.combineID);
                           /// this types is selected and after value is null so this types = '';
                           types = '';
                           imgUrl1 = '';
@@ -557,7 +458,7 @@ class _ChatPageState extends State<ChatPage> {
                         }
                       },
                       icon: Icon(Icons.send),
-                      label: Text(''),
+                      lable: Text(''),
                     ),
                   )
                 ],
@@ -591,7 +492,7 @@ class _ChatPageState extends State<ChatPage> {
                   Clipboard.setData(new ClipboardData(text: url)).then((value) {
                     //only if ->
                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${CopySuccessfully}')));
+                        SnackBar(content: Text('${copySuccessfully}')));
                   });
                   print(
                       "uuurl ${Clipboard.setData(new ClipboardData(text: url))}");
@@ -599,7 +500,7 @@ class _ChatPageState extends State<ChatPage> {
                   Navigator.pop(context);
                 },
                 icon: Icon(Icons.copy),
-                label: Text('${Copy}')),
+                label: Text('${copy}')),
             value: '1'),
         PopupMenuItem<String>(
             child: TextButton.icon(
@@ -616,7 +517,7 @@ class _ChatPageState extends State<ChatPage> {
                   });
                 },
                 icon: Icon(Icons.download),
-                label: Text('${Download}')),
+                label: Text('${download}')),
             value: '2'),
         PopupMenuItem<String>(
             child: TextButton.icon(
@@ -628,11 +529,11 @@ class _ChatPageState extends State<ChatPage> {
                       // return object of type Dialog
                       return AlertDialog(
                         title: new Text("${alert}"),
-                        content: new Text("${AreYouSureDeleteMessage}"),
+                        content: new Text("${areYouSureDeleteMessage}"),
                         actions: <Widget>[
                           // usually buttons at the bottom of the dialog
                           TextButton(
-                            child: new Text("${Close}"),
+                            child: new Text("${close}"),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
@@ -640,7 +541,7 @@ class _ChatPageState extends State<ChatPage> {
                           TextButton(
                             child: new Text("${delete}"),
                             onPressed: () {
-                              userService.deleteImageTypeMessage(
+                              chatService.deleteImageTypeMessage(
                                   url, widget.combineID, context);
                               Navigator.pop(context);
                             },
@@ -651,7 +552,7 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 },
                 icon: Icon(Icons.delete),
-                label: Text('${Delete}')),
+                label: Text('${delete}')),
             value: '2'),
       ],
       elevation: 8.0,
@@ -687,14 +588,14 @@ class _ChatPageState extends State<ChatPage> {
                       .then((value) {
                     //only if ->
                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${CopySuccessfully}')));
+                        SnackBar(content: Text('${copySuccessfully}')));
                   });
                   print(
                       "uuurl ${Clipboard.setData(new ClipboardData(text: message))}");
                   Navigator.pop(context);
                 },
                 icon: Icon(Icons.copy),
-                label: Text('${Copy}')),
+                label: Text('${copy}')),
             value: '1'),
         PopupMenuItem<String>(
             child: TextButton.icon(
@@ -706,11 +607,11 @@ class _ChatPageState extends State<ChatPage> {
                       // return object of type Dialog
                       return AlertDialog(
                         title: new Text("${alert}"),
-                        content: new Text("${AreYouSureDeleteMessage}"),
+                        content: new Text("${areYouSureDeleteMessage}"),
                         actions: <Widget>[
                           // usually buttons at the bottom of the dialog
                           TextButton(
-                            child: new Text("${Close}"),
+                            child: new Text("${close}"),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
@@ -718,7 +619,7 @@ class _ChatPageState extends State<ChatPage> {
                           TextButton(
                             child: new Text("${delete}"),
                             onPressed: () {
-                              userService.deleteTextTypeMessage(
+                              chatService.deleteTextTypeMessage(
                                   message, widget.combineID, context);
                               Navigator.pop(context);
                             },
@@ -729,7 +630,7 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 },
                 icon: Icon(Icons.delete),
-                label: Text('${Delete}')),
+                label: Text('${delete}')),
             value: '2'),
       ],
       elevation: 8.0,
@@ -768,19 +669,19 @@ class _ChatPageState extends State<ChatPage> {
                       // return object of type Dialog
                       return AlertDialog(
                         title: new Text("${alert}"),
-                        content: new Text("${AreYouSureClearChat}"),
+                        content: new Text("${areYouSureClearChat}"),
                         actions: <Widget>[
                           // usually buttons at the bottom of the dialog
                           TextButton(
-                            child: new Text("${Close}"),
+                            child: new Text("${close}"),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: new Text("${Clear}"),
+                            child: new Text("${clear}"),
                             onPressed: () async {
-                              await userService.clearChat(widget.combineID);
+                              await chatService.clearChat(widget.combineID);
                               Navigator.pop(context);
                             },
                           ),
@@ -790,7 +691,7 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 },
                 icon: Icon(Icons.delete),
-                label: Text('${ClearChat}')),
+                label: Text('${clearChat}')),
             value: '2'),
       ],
       elevation: 8.0,
