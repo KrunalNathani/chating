@@ -35,7 +35,6 @@ class _ChatUserPageState extends State<ChatUserPage> {
   String? chatRoomID;
 
   List userChatRoomID = [];
-  Set? filterChatRoomID;
 
   @override
   Widget build(BuildContext context) {
@@ -123,8 +122,7 @@ class _ChatUserPageState extends State<ChatUserPage> {
                               print("chatRoomID ${chatRoomID}");
 
                               userChatRoomID.add(chatRoomID);
-                              filterChatRoomID = userChatRoomID.toSet();
-                              print('filterChatRoomID ${filterChatRoomID}');
+
 
                               Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => ChatPage(
